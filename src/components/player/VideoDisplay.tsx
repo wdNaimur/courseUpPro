@@ -1,5 +1,13 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
-import { PlayCircle, ChevronLeft, ChevronRight, X, Play } from "lucide-react";
+import {
+  PlayCircle,
+  ChevronLeft,
+  ChevronRight,
+  X,
+  Play,
+  Maximize2,
+  Minimize2,
+} from "lucide-react";
 import type { LessonVideo } from "../../types/course";
 
 type VideoDisplayProps = {
@@ -91,6 +99,14 @@ export default function VideoDisplay({
     }, 2500);
   };
 
+  useEffect(() => {
+    if (isFullscreen) {
+      setShowOverlays(true);
+    } else {
+      setShowOverlays(false);
+    }
+  }, [isFullscreen]);
+
   const toggleFullscreen = () => {
     if (!containerRef.current) return;
     if (!document.fullscreenElement) {
@@ -125,6 +141,7 @@ export default function VideoDisplay({
       <div
         ref={containerRef}
         onMouseMove={handleMouseMove}
+        onClick={() => isFullscreen && handleMouseMove()}
         onMouseLeave={() => isFullscreen && setShowOverlays(false)}
         onDoubleClick={toggleFullscreen}
         className={[
@@ -143,7 +160,7 @@ export default function VideoDisplay({
           <video
             ref={videoRef}
             controls
-            controlsList="nodownload"
+            controlsList="nodownload nofullscreen"
             preload="metadata"
             className="h-full w-full max-h-full"
           />
@@ -219,9 +236,24 @@ export default function VideoDisplay({
           <div
             className={[
               "pointer-events-none absolute inset-0 z-50 flex items-center justify-between px-4 md:px-12 transition-opacity duration-300",
-              showOverlays || !isFullscreen ? "opacity-100" : "opacity-0",
+              isFullscreen || showOverlays || !isFullscreen ? "opacity-100" : "opacity-0",
             ].join(" ")}
           >
+            <button
+              onClick={(e) => {
+                e.preventDefault();
+                toggleFullscreen();
+              }}
+              className="pointer-events-auto absolute right-4 top-4 flex h-10 w-10 items-center justify-center rounded-full bg-black/50 text-white backdrop-blur-md transition-all hover:bg-black/70 active:scale-90"
+              title={isFullscreen ? "Exit Fullscreen" : "Enter Fullscreen"}
+            >
+              {isFullscreen ? (
+                <Minimize2 className="h-4 w-4" />
+              ) : (
+                <Maximize2 className="h-4 w-4" />
+              )}
+            </button>
+
             <button
               onClick={(e) => {
                 e.preventDefault();
