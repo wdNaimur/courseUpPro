@@ -46,17 +46,26 @@ export default function VideoDisplay({
   const [isMuted, setIsMuted] = useState(false);
   const [isInteractingWithControls, setIsInteractingWithControls] =
     useState(false);
+  const [showPauseOverlay, setShowPauseOverlay] = useState(false);
   const [centerAction, setCenterAction] = useState<"play" | "pause" | null>(
     null,
   );
   const timerRef = useRef<number | null>(null);
   const autoPlayTimerRef = useRef<number | null>(null);
   const centerActionTimerRef = useRef<number | null>(null);
+  const pauseOverlayTimerRef = useRef<number | null>(null);
 
   const clearOverlayTimer = useCallback(() => {
     if (timerRef.current) {
       window.clearTimeout(timerRef.current);
       timerRef.current = null;
+    }
+  }, []);
+
+  const clearPauseOverlayTimer = useCallback(() => {
+    if (pauseOverlayTimerRef.current) {
+      window.clearTimeout(pauseOverlayTimerRef.current);
+      pauseOverlayTimerRef.current = null;
     }
   }, []);
 
@@ -153,8 +162,9 @@ export default function VideoDisplay({
   useEffect(() => {
     return () => {
       clearOverlayTimer();
+      clearPauseOverlayTimer();
     };
-  }, [clearOverlayTimer]);
+  }, [clearOverlayTimer, clearPauseOverlayTimer]);
 
   const handleMouseMove = () => {
     setShowOverlays(true);
@@ -186,18 +196,22 @@ export default function VideoDisplay({
       setShowOverlays(true);
     } else {
       clearOverlayTimer();
+      clearPauseOverlayTimer();
       setIsInteractingWithControls(false);
+      setShowPauseOverlay(false);
       setShowOverlays(false);
     }
-  }, [isFullscreen, clearOverlayTimer]);
+  }, [isFullscreen, clearOverlayTimer, clearPauseOverlayTimer]);
 
   useEffect(() => {
     setShowAutoPlay(false);
     setCountdown(5);
+    clearPauseOverlayTimer();
+    setShowPauseOverlay(false);
     if (isFullscreen) {
       setShowOverlays(true);
     }
-  }, [activeLesson, isFullscreen]);
+  }, [activeLesson, isFullscreen, clearPauseOverlayTimer]);
 
   const toggleFullscreen = () => {
     if (!containerRef.current) return;
@@ -224,6 +238,31 @@ export default function VideoDisplay({
     video.pause();
     setCenterAction("pause");
   };
+
+  useEffect(() => {
+    clearPauseOverlayTimer();
+
+    if (!isPlaying) {
+      clearOverlayTimer();
+      setShowOverlays(true);
+      pauseOverlayTimerRef.current = window.setTimeout(() => {
+        if (!isInteractingWithControls) {
+          setShowPauseOverlay(true);
+        }
+      }, 5000);
+    } else {
+      setShowPauseOverlay(false);
+    }
+
+    return () => {
+      clearPauseOverlayTimer();
+    };
+  }, [
+    isPlaying,
+    isInteractingWithControls,
+    clearOverlayTimer,
+    clearPauseOverlayTimer,
+  ]);
 
   useEffect(() => {
     if (!centerAction) return;
@@ -404,14 +443,32 @@ export default function VideoDisplay({
           />
         </div>
 
-        {centerAction && (
-          <div className="pointer-events-none absolute inset-0 z-[58] flex items-center justify-center">
-            <div className="grid h-20 w-20 place-items-center rounded-full bg-black/55 text-white shadow-2xl backdrop-blur-sm">
-              {centerAction === "play" ? (
-                <Play className="h-8 w-8 fill-current" />
-              ) : (
-                <Pause className="h-8 w-8 fill-current" />
-              )}
+        {!showAutoPlay && showPauseOverlay && (
+          <div className="pointer-events-none absolute inset-0 z-[54] bg-gradient-to-t from-black/72 via-black/18 to-black/58">
+            <div className="flex h-full items-center justify-center px-6">
+              <button
+                onClick={togglePlayPause}
+                onMouseEnter={handleControlsMouseEnter}
+                onMouseLeave={handleControlsMouseLeave}
+                className="pointer-events-auto grid h-24 w-24 place-items-center rounded-full border border-white/20 bg-white/12 text-white shadow-2xl backdrop-blur-md transition hover:scale-105 hover:bg-white/18 active:scale-95 md:h-28 md:w-28"
+                title="Resume playback"
+              >
+                <Play className="ml-1 h-10 w-10 fill-current md:h-12 md:w-12" />
+              </button>
+            </div>
+
+            <div className="pointer-events-none absolute inset-x-0 top-0 bg-gradient-to-b from-black/85 via-black/35 to-transparent px-6 pb-16 pt-6 md:px-10 md:pt-8">
+              <div className="max-w-3xl">
+                <p className="text-[11px] font-black uppercase tracking-[0.35em] text-white/45">
+                  Paused
+                </p>
+                <h2 className="mt-3 text-2xl font-black text-white md:text-4xl">
+                  {activeLesson.title}
+                </h2>
+                <p className="mt-3 text-sm font-semibold text-white/65 md:text-base">
+                  {formatTime(currentTime)} / {formatTime(duration)}
+                </p>
+              </div>
             </div>
           </div>
         )}
@@ -422,7 +479,11 @@ export default function VideoDisplay({
             onMouseLeave={handleControlsMouseLeave}
             className={[
               "absolute inset-x-0 bottom-0 z-[55] bg-gradient-to-t from-black/80 via-black/40 to-transparent px-3 pb-3 pt-8 transition-opacity duration-300 md:px-4",
-              isFullscreen ? (showOverlays ? "opacity-100" : "opacity-0") : "opacity-100",
+              isFullscreen
+                ? showOverlays
+                  ? "opacity-100"
+                  : "opacity-0"
+                : "opacity-100",
             ].join(" ")}
           >
             <div className="mb-2">
