@@ -73,17 +73,17 @@ export default function FolderAccordion({
               aria-expanded={isOpen}
             >
               <div className="flex min-w-0 flex-1 flex-col gap-1">
-                <span className="block w-full text-[13px] font-bold text-slate-100 md:text-sm">
+                <span className="block w-full text-[13px] font-bold text-[var(--theme-text)] md:text-sm">
                   {normalizeSectionTitle(folderName)}
                 </span>
-                <span className="text-[11px] font-medium text-slate-500">
+                <span className="text-[11px] font-medium text-[var(--theme-text-faint)]">
                   {completedLessons} / {totalLessons} lessons
                 </span>
               </div>
 
               <ChevronRight
                 className={[
-                  "h-5 w-5 shrink-0 text-slate-400 transition-transform duration-200",
+                  "h-5 w-5 shrink-0 text-[var(--theme-text-muted)] transition-transform duration-200",
                   isOpen ? "rotate-90" : "rotate-0",
                 ].join(" ")}
               />
@@ -92,8 +92,8 @@ export default function FolderAccordion({
             {isOpen ? (
               <div
                 className={[
-                  "flex flex-col gap-2 bg-slate-950/18 p-2",
-                  depth > 0 ? "ml-3 border-l border-white/8 pl-3" : "",
+                  "flex flex-col gap-2 bg-black/12 p-2",
+                  depth > 0 ? "ml-3 border-l border-[var(--theme-border)] pl-3" : "",
                 ].join(" ")}
               >
                 <FolderAccordion
@@ -142,11 +142,11 @@ export default function FolderAccordion({
         <div className="glass-panel overflow-hidden rounded-2xl">
           <div className="flex items-center justify-between px-4 py-3">
             <div className="flex min-w-0 flex-1 flex-col gap-1">
-              <span className="text-[15px] font-bold text-slate-100">
+              <span className="text-[15px] font-bold text-[var(--theme-text)]">
                 Main section
               </span>
               <div className="flex items-center gap-2">
-                <span className="text-[11px] font-medium text-slate-500">
+                <span className="text-[11px] font-medium text-[var(--theme-text-faint)]">
                   {node.lessons.filter((l) => getLessonCompletion(l.id)).length} /{" "}
                   {node.lessons.length} lessons
                 </span>
@@ -157,7 +157,7 @@ export default function FolderAccordion({
                 )}
               </div>
             </div>
-            <Video className="h-4 w-4 shrink-0 text-slate-500" />
+            <Video className="h-4 w-4 shrink-0 text-[var(--theme-text-faint)]" />
           </div>
 
           <div className="flex flex-col gap-2 p-2">

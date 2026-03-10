@@ -25,16 +25,16 @@ export default function LessonItem({
       className={[
         "group flex w-full min-w-0 items-center gap-3 rounded-2xl border p-2.5 transition-all cursor-pointer select-none backdrop-blur-md",
         isActive
-          ? "border-violet-400/35 bg-violet-500/18 shadow-[0_18px_40px_rgba(76,29,149,0.25)]"
-          : "border-white/10 bg-white/6 hover:border-white/18 hover:bg-white/10",
+          ? "border-[color:color-mix(in_srgb,var(--theme-accent-soft)_24%,transparent)] bg-[color:color-mix(in_srgb,var(--theme-accent)_18%,transparent)] shadow-[0_18px_40px_rgba(215,96,59,0.18)]"
+          : "border-[var(--theme-border)] bg-white/6 hover:border-[var(--theme-border-strong)] hover:bg-white/10",
       ].join(" ")}
     >
       <div
         className={[
           "flex h-8 w-8 shrink-0 items-center justify-center rounded-xl border transition-all",
           isActive
-            ? "border-violet-300/50 bg-violet-500/85 text-white"
-            : "border-white/10 bg-black/20 text-slate-400",
+            ? "border-[color:color-mix(in_srgb,var(--theme-accent-soft)_34%,transparent)] bg-[var(--theme-accent)] text-white"
+            : "border-[var(--theme-border)] bg-black/20 text-[var(--theme-text-faint)]",
         ].join(" ")}
       >
         {isActive ? (
@@ -48,12 +48,12 @@ export default function LessonItem({
         <span
           className={[
             "text-[12px] font-semibold tracking-tight transition-colors",
-            isActive ? "text-white" : "text-slate-300",
+            isActive ? "text-[var(--theme-text)]" : "text-[var(--theme-text-soft)]",
           ].join(" ")}
         >
           {lesson.title}
         </span>
-        <span className="text-[9px] text-slate-500 font-medium opacity-60">
+        <span className="text-[9px] font-medium opacity-60 text-[var(--theme-text-faint)]">
           Lesson {lesson.displayIndex}
         </span>
       </div>
@@ -75,7 +75,7 @@ export default function LessonItem({
         <Check
           className={[
             "h-3.5 w-3.5 translate-x-[0.5px]",
-            isCompleted ? "opacity-100 text-violet-300" : "opacity-40",
+            isCompleted ? "opacity-100 text-[var(--theme-accent-soft)]" : "opacity-40",
           ].join(" ")}
         />
       </button>

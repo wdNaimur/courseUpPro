@@ -1,12 +1,15 @@
 import { useRef, useState } from "react";
 import {
   AlertTriangle,
+  ArrowUpRight,
+  CheckCircle2,
   FolderOpen,
   Plus,
   Search,
   Sparkles,
   Library,
   Clock3,
+  HardDriveDownload,
 } from "lucide-react";
 import type { CourseMetadata } from "../types/course";
 import CourseCard from "../components/home/CourseCard";
@@ -287,18 +290,18 @@ export default function HomePage({ onCourseSelect, filesCache, onPlayFromCache }
     .sort((a, b) => b.lastPlayedAt - a.lastPlayedAt)[0] || null;
 
   return (
-    <div className="h-screen overflow-y-auto bg-[radial-gradient(circle_at_top_left,_rgba(139,92,246,0.18),_transparent_28%),radial-gradient(circle_at_top_right,_rgba(34,197,94,0.10),_transparent_22%),linear-gradient(180deg,_#020617_0%,_#0f172a_48%,_#111827_100%)] px-4 py-6 text-slate-100 scrollbar-thin scrollbar-thumb-slate-800 scrollbar-track-transparent md:px-10 lg:px-16">
+    <div className="app-shell h-screen overflow-y-auto px-4 py-6 text-[var(--theme-text)] scrollbar-thin scrollbar-track-transparent md:px-8 lg:px-14">
       {courseToDelete && (
-        <div className="fixed inset-0 z-[110] flex items-center justify-center bg-slate-950/80 px-4 backdrop-blur-md">
-          <div className="glass-panel w-full max-w-md rounded-[2rem] p-6">
+        <div className="fixed inset-0 z-[110] flex items-center justify-center bg-[var(--theme-overlay)] px-4 backdrop-blur-md">
+          <div className="editorial-panel w-full max-w-md rounded-[2rem] p-6">
             <div className="mb-5 flex items-start gap-4">
               <div className="rounded-xl border border-red-500/30 bg-red-500/10 p-2.5">
                 <AlertTriangle className="h-5 w-5 text-red-400" />
               </div>
               <div>
                 <h3 className="text-lg font-black text-white">Delete course?</h3>
-                <p className="mt-1 text-sm text-slate-400">
-                  This will remove <span className="font-semibold text-slate-200">{courseToDelete.title}</span> from your list and delete its saved progress.
+                <p className="mt-1 text-sm theme-text-muted">
+                  This will remove <span className="font-semibold theme-text">{courseToDelete.title}</span> from your list and delete its saved progress.
                 </p>
               </div>
             </div>
@@ -322,16 +325,16 @@ export default function HomePage({ onCourseSelect, filesCache, onPlayFromCache }
       )}
 
       {(pendingCourseImport || courseIdToEditPriority) && (
-        <div className="fixed inset-0 z-[120] flex items-center justify-center bg-slate-950/80 px-4 backdrop-blur-md">
-          <div className="glass-panel w-full max-w-lg rounded-[2rem] p-6">
+        <div className="fixed inset-0 z-[120] flex items-center justify-center bg-[var(--theme-overlay)] px-4 backdrop-blur-md">
+          <div className="editorial-panel w-full max-w-lg rounded-[2rem] p-6">
             <div className="space-y-2">
-              <p className="text-[11px] font-bold uppercase tracking-[0.24em] text-white/50">
+              <p className="section-label">
                 Course priority
               </p>
               <h3 className="text-2xl font-black text-white">
                 {pendingCourseImport ? "Set priority before adding" : "Edit course priority"}
               </h3>
-              <p className="text-sm leading-6 text-slate-300">
+              <p className="text-sm leading-6 theme-text-soft">
                 Choose how this course should be labeled in your library. You can use values like
                 `High`, `Medium`, `Low`, `Focus`, or anything else that fits your workflow.
               </p>
@@ -346,7 +349,7 @@ export default function HomePage({ onCourseSelect, filesCache, onPlayFromCache }
                 value={priorityDraft}
                 onChange={(event) => setPriorityDraft(event.target.value)}
                 placeholder={DEFAULT_COURSE_PRIORITY}
-                className="w-full rounded-2xl border border-white/10 bg-black/18 px-4 py-3 text-sm font-semibold text-slate-100 placeholder:text-slate-500 focus:border-violet-500/40 focus:outline-none focus:ring-4 focus:ring-violet-500/10"
+                className="w-full rounded-2xl border border-[var(--theme-border)] bg-black/18 px-4 py-3 text-sm font-semibold text-[var(--theme-text)] placeholder:text-[var(--theme-text-faint)] focus:border-[color:color-mix(in_srgb,var(--theme-accent-soft)_35%,transparent)] focus:outline-none focus:ring-4 focus:ring-[color:color-mix(in_srgb,var(--theme-accent-soft)_10%,transparent)]"
               />
               <div className="flex flex-wrap gap-2">
                 {["High", "Medium", "Low", "Focus", DEFAULT_COURSE_PRIORITY].map((option) => (
@@ -388,10 +391,10 @@ export default function HomePage({ onCourseSelect, filesCache, onPlayFromCache }
       )}
 
       {isScanning && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/80 backdrop-blur-md">
-          <div className="glass-panel flex flex-col items-center gap-4 rounded-[2rem] px-10 py-8">
-            <div className="h-12 w-12 animate-spin rounded-full border-4 border-violet-500 border-t-transparent"></div>
-            <p className="text-lg font-bold text-white text-center">Scanning your files...<br/><span className="text-sm font-normal text-slate-400">This may take a moment for large folders</span></p>
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-[var(--theme-overlay)] backdrop-blur-md">
+          <div className="editorial-panel flex flex-col items-center gap-4 rounded-[2rem] px-10 py-8">
+            <div className="h-12 w-12 animate-spin rounded-full border-4 border-[var(--theme-accent-warm)] border-t-transparent"></div>
+            <p className="text-center text-lg font-bold text-white">Scanning your files...<br/><span className="theme-text-muted text-sm font-normal">This may take a moment for large folders</span></p>
           </div>
         </div>
       )}
@@ -406,109 +409,156 @@ export default function HomePage({ onCourseSelect, filesCache, onPlayFromCache }
         onChange={handleLegacyFolderPick}
       />
 
-      <div className="mx-auto flex w-full max-w-[1500px] flex-col gap-8">
-        <header className="glass-panel relative overflow-hidden rounded-[2rem] px-6 py-7 md:px-8 md:py-8">
-          <div className="absolute -left-10 top-0 h-36 w-36 rounded-full bg-violet-500/16 blur-3xl" />
-          <div className="absolute right-0 top-0 h-40 w-40 rounded-full bg-cyan-400/8 blur-3xl" />
+      <div className="mx-auto flex w-full max-w-[1520px] flex-col gap-8 pb-10">
+        <header className="relative overflow-hidden rounded-[2.25rem] border border-[var(--theme-border)] bg-[color:color-mix(in_srgb,var(--theme-bg)_80%,transparent)] px-5 py-5 shadow-[0_32px_100px_var(--theme-shadow)] md:px-7 md:py-7">
+          <div className="absolute inset-x-[15%] top-[-9rem] h-52 rounded-full bg-[color:color-mix(in_srgb,var(--theme-accent-warm)_18%,transparent)] blur-3xl" />
+          <div className="absolute -right-10 bottom-8 h-44 w-44 rounded-full bg-[color:color-mix(in_srgb,var(--theme-accent)_18%,transparent)] blur-3xl" />
 
-          <div className="relative grid gap-8 xl:grid-cols-[minmax(0,1.2fr)_minmax(320px,420px)] xl:items-end">
-            <div className="space-y-5">
-              <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/6 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.24em] text-white/70">
-                <Sparkles className="h-3.5 w-3.5 text-violet-300" />
-                {APP_NAME}
-              </div>
-
-              <div className="space-y-3">
-                <h1 className="max-w-4xl text-4xl font-black tracking-tight text-white md:text-5xl">
-                  {APP_NAME} keeps your course folders tidy, playable, and easy to revisit.
-                </h1>
-                <p className="max-w-2xl text-sm leading-7 text-slate-300 md:text-base">
-                  A local-first course shelf for people who want quick playback, saved progress, and cleaner organization without uploading anything.
-                </p>
-              </div>
-
-              <div className="grid gap-3 sm:grid-cols-3">
-                <div className="rounded-2xl border border-white/10 bg-black/18 px-4 py-4">
-                  <div className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.2em] text-white/55">
-                    <Library className="h-3.5 w-3.5" />
-                    Courses
+          <div className="relative grid gap-5 xl:grid-cols-[minmax(0,1.35fr)_380px]">
+            <section className="editorial-panel fade-in-up overflow-hidden rounded-[2rem] px-6 py-6 md:px-8 md:py-8">
+              <div className="grid gap-8 xl:grid-cols-[minmax(0,1fr)_220px]">
+                <div className="space-y-6">
+                  <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/6 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.24em] text-white/70">
+                    <Sparkles className="h-3.5 w-3.5 text-[var(--theme-accent-soft)]" />
+                    {APP_NAME}
                   </div>
-                  <p className="mt-3 text-3xl font-black text-white">{courses.length}</p>
+
+                  <div className="space-y-4">
+                    <p className="section-label">Local-first learning library</p>
+                    <h1 className="max-w-4xl text-4xl font-black leading-[0.95] tracking-[-0.04em] text-[var(--theme-text)] md:text-6xl xl:text-[5.3rem]">
+                      Organize downloaded courses like a curated collection.
+                    </h1>
+                    <p className="max-w-2xl text-sm leading-7 text-[var(--theme-text-muted)] md:text-base">
+                      Inspired by editorial portfolio layouts rather than generic dashboards: bold hierarchy, fast scanning, and quick access to the course folders you actually use.
+                    </p>
+                  </div>
+
+                  <div className="flex flex-wrap gap-3">
+                    <button
+                      onClick={handleAddCourse}
+                      className="glass-button-primary flex items-center justify-center gap-2 rounded-full px-6 py-3.5 font-bold text-white hover:-translate-y-1"
+                    >
+                      <Plus className="h-5 w-5" />
+                      Add New Course
+                    </button>
+                    <div className="glass-button inline-flex items-center gap-2 rounded-full px-4 py-3 text-sm font-semibold text-white/80">
+                      <CheckCircle2 className="h-4 w-4 text-[var(--theme-accent-soft)]" />
+                      Progress is stored locally
+                    </div>
+                  </div>
                 </div>
-                <div className="rounded-2xl border border-white/10 bg-black/18 px-4 py-4">
-                  <div className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.2em] text-white/55">
-                    <Clock3 className="h-3.5 w-3.5" />
-                    Cached
+
+                <div className="grid gap-3 self-start">
+                  <div className="rounded-[1.6rem] border border-[var(--theme-border)] bg-black/18 p-4">
+                    <p className="section-label">Library size</p>
+                    <div className="mt-4 flex items-end justify-between gap-3">
+                      <p className="text-5xl font-black tracking-[-0.05em] text-[var(--theme-text)]">{courses.length}</p>
+                      <Library className="h-6 w-6 text-[var(--theme-accent-soft)]" />
+                    </div>
+                    <p className="mt-3 text-sm leading-6 text-[var(--theme-text-muted)]">
+                      Courses indexed and ready to reopen.
+                    </p>
                   </div>
-                  <p className="mt-3 text-3xl font-black text-white">{cachedCourseCount}</p>
+                  <div className="rounded-[1.6rem] border border-[var(--theme-border)] bg-black/18 p-4">
+                    <p className="section-label">Latest return</p>
+                    <p className="mt-4 line-clamp-2 text-lg font-black text-[var(--theme-text)]">
+                      {recentCourse ? recentCourse.title : "No course yet"}
+                    </p>
+                    <div className="mt-3 flex items-center gap-2 text-sm text-[var(--theme-text-muted)]">
+                      <Clock3 className="h-4 w-4 text-[var(--theme-accent-soft)]" />
+                      <span>{cachedCourseCount} cached for this session</span>
+                    </div>
+                  </div>
                 </div>
-                <div className="rounded-2xl border border-white/10 bg-black/18 px-4 py-4">
-                  <div className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.2em] text-white/55">
-                    <FolderOpen className="h-3.5 w-3.5" />
-                    Last opened
-                  </div>
-                  <p className="mt-3 line-clamp-2 text-sm font-bold text-white/85">
-                    {recentCourse ? recentCourse.title : "No course yet"}
+              </div>
+            </section>
+
+            <aside className="fade-in-up grid gap-5 [animation-delay:120ms]">
+              <div className="editorial-panel rounded-[2rem] p-5 md:p-6">
+                <div className="space-y-2">
+                  <p className="section-label">Quick start</p>
+                  <h2 className="text-3xl font-black leading-tight text-[var(--theme-text)]">
+                    Drop in a folder and open it instantly.
+                  </h2>
+                  <p className="text-sm leading-6 text-[var(--theme-text-soft)]">
+                    Best results come from folders that include lesson videos and optional metadata files like `thumbnail.png` and `priority.txt`.
                   </p>
                 </div>
-              </div>
-            </div>
 
-            <div className="space-y-4 rounded-[1.75rem] border border-white/10 bg-black/18 p-4 md:p-5">
-              <div className="space-y-1">
-                <p className="text-[11px] font-bold uppercase tracking-[0.24em] text-white/55">
-                  Quick start
-                </p>
-                <h2 className="text-2xl font-black text-white">
-                  Add a course to {APP_NAME}
-                </h2>
-                <p className="text-sm leading-6 text-slate-300">
-                  Pick a local folder, set its priority, and keep it ready in your library.
-                </p>
+                <button
+                  onClick={handleAddCourse}
+                  className="glass-button-primary mt-6 flex w-full items-center justify-center gap-2 rounded-[1.4rem] px-6 py-4 font-bold text-white hover:-translate-y-1"
+                >
+                  <HardDriveDownload className="h-5 w-5" />
+                  Import Course Folder
+                </button>
               </div>
 
-              <button
-                onClick={handleAddCourse}
-                className="glass-button-primary flex w-full items-center justify-center gap-2 rounded-2xl px-6 py-4 font-bold text-white hover:-translate-y-1"
-              >
-                <Plus className="h-5 w-5" />
-                Add New Course
-              </button>
-
-              <p className="text-xs leading-6 text-slate-400">
-                Works best with folders that contain lesson videos plus optional `thumbnail.png` and `priority.txt` files.
-              </p>
-            </div>
+              <div className="editorial-panel rounded-[2rem] p-5 md:p-6">
+                <div className="flex items-center justify-between gap-3">
+                  <div>
+                    <p className="section-label">System fit</p>
+                    <p className="mt-2 text-lg font-black text-[var(--theme-text)]">Built for offline playback</p>
+                  </div>
+                  <ArrowUpRight className="h-5 w-5 text-[var(--theme-accent-soft)]" />
+                </div>
+                <div className="mt-5 grid gap-3">
+                  <div className="rounded-[1.4rem] border border-white/8 bg-white/[0.04] px-4 py-3">
+                    <p className="text-xs uppercase tracking-[0.18em] text-white/45">Priority labels</p>
+                    <p className="mt-1 text-sm text-[var(--theme-text-soft)]">Tag courses with focus level before they enter the library.</p>
+                  </div>
+                  <div className="rounded-[1.4rem] border border-white/8 bg-white/[0.04] px-4 py-3">
+                    <p className="text-xs uppercase tracking-[0.18em] text-white/45">Reopen flow</p>
+                    <p className="mt-1 text-sm text-[var(--theme-text-soft)]">Saved folder handles restore access when the browser allows it.</p>
+                  </div>
+                </div>
+              </div>
+            </aside>
           </div>
         </header>
 
-        <section className="glass-panel rounded-[2rem] p-4 md:p-5">
-          <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-center">
-            <div className="relative">
-              <div className="pointer-events-none absolute inset-y-0 left-5 flex items-center">
-                <Search className="h-5 w-5 text-slate-500" />
+        <section className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_300px]">
+          <div className="editorial-panel fade-in-up rounded-[2rem] p-4 md:p-5 [animation-delay:160ms]">
+            <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-center">
+              <div className="relative">
+                <div className="pointer-events-none absolute inset-y-0 left-5 flex items-center">
+                  <Search className="h-5 w-5 text-[var(--theme-text-faint)]" />
+                </div>
+                <input
+                  type="text"
+                  placeholder="Search your courses..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full rounded-[1.4rem] border border-[var(--theme-border)] bg-black/18 py-4 pl-14 pr-6 text-[var(--theme-text)] placeholder:text-[var(--theme-text-faint)] focus:border-[color:color-mix(in_srgb,var(--theme-accent-soft)_35%,transparent)] focus:outline-none focus:ring-4 focus:ring-[color:color-mix(in_srgb,var(--theme-accent-soft)_10%,transparent)] transition-all"
+                />
               </div>
-              <input
-                type="text"
-                placeholder="Search your courses..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full rounded-2xl border border-white/10 bg-black/18 py-4 pl-14 pr-6 text-slate-100 placeholder:text-slate-500 focus:border-violet-500/40 focus:outline-none focus:ring-4 focus:ring-violet-500/10 transition-all"
-              />
-            </div>
 
-            <div className="flex items-center gap-2 rounded-2xl border border-white/10 bg-black/18 px-4 py-3 text-sm text-slate-300">
-              <span className="font-bold text-white">{filteredCourses.length}</span>
-              <span>{filteredCourses.length === 1 ? "course" : "courses"} shown</span>
+              <div className="flex items-center gap-2 rounded-[1.3rem] border border-[var(--theme-border)] bg-black/18 px-4 py-3 text-sm text-[var(--theme-text-soft)]">
+                <span className="font-bold text-white">{filteredCourses.length}</span>
+                <span>{filteredCourses.length === 1 ? "course" : "courses"} shown</span>
+              </div>
             </div>
+          </div>
+
+          <div className="editorial-panel fade-in-up rounded-[2rem] p-5 [animation-delay:220ms]">
+            <p className="section-label">Collection status</p>
+            <p className="mt-3 text-3xl font-black leading-none tracking-[-0.04em] text-[var(--theme-text)]">
+              {cachedCourseCount}
+            </p>
+            <p className="mt-2 text-sm leading-6 text-[var(--theme-text-soft)]">
+              Courses already cached in memory for immediate replay.
+            </p>
           </div>
         </section>
 
-        <section>
-          <div className="mb-5 flex items-center justify-between">
-            <div>
-              <h2 className="text-xl font-black text-white md:text-2xl">Your library</h2>
-              <p className="mt-1 text-sm text-slate-400">
+        <section className="fade-in-up [animation-delay:260ms]">
+          <div className="mb-5 flex items-center justify-between gap-4">
+            <div className="relative">
+              <p className="section-label">Your library</p>
+              <h2 className="mt-2 text-3xl font-black tracking-[-0.03em] text-[var(--theme-text)] md:text-4xl">
+                Browse the full course wall
+              </h2>
+              <p className="mt-2 text-sm text-[var(--theme-text-muted)]">
                 Open a course, adjust its priority, or jump back into your latest lessons.
               </p>
             </div>
@@ -527,17 +577,17 @@ export default function HomePage({ onCourseSelect, filesCache, onPlayFromCache }
               ))}
             </div>
           ) : (
-            <div className="glass-panel flex flex-col items-center justify-center rounded-[2rem] px-6 py-20 text-center">
+            <div className="editorial-panel flex flex-col items-center justify-center rounded-[2rem] px-6 py-20 text-center">
               <div className="mb-6 rounded-full border border-white/10 bg-black/18 p-7">
-                <FolderOpen className="h-14 w-14 text-slate-600" />
+                <FolderOpen className="h-14 w-14 text-[var(--theme-text-faint)]" />
               </div>
-              <h2 className="text-2xl font-black text-slate-100">No courses added yet</h2>
-              <p className="mx-auto mt-3 max-w-md text-sm leading-7 text-slate-400">
+              <h2 className="text-2xl font-black text-[var(--theme-text)]">No courses added yet</h2>
+              <p className="mx-auto mt-3 max-w-md text-sm leading-7 text-[var(--theme-text-muted)]">
                 Add a local course folder to start building your {APP_NAME} library and track progress lesson by lesson.
               </p>
               <button
                 onClick={handleAddCourse}
-                className="glass-button mt-8 rounded-full px-8 py-3 font-semibold text-slate-100"
+                className="glass-button mt-8 rounded-full px-8 py-3 font-semibold text-[var(--theme-text)]"
               >
                 Select a folder
               </button>

@@ -256,21 +256,21 @@ export default function LocalCoursePlayer({
   }, [initialFiles, processFiles]);
 
   return (
-    <div className="flex h-screen flex-col overflow-hidden bg-gradient-to-b from-slate-950 via-slate-950 to-slate-900 text-slate-100">
-      <header className="z-20 shrink-0 border-b border-slate-800 bg-slate-950/90 backdrop-blur">
+    <div className="flex h-screen flex-col overflow-hidden bg-[linear-gradient(180deg,var(--theme-bg)_0%,var(--theme-bg)_50%,var(--theme-bg-alt)_100%)] text-[var(--theme-text)]">
+      <header className="z-20 shrink-0 border-b border-[var(--theme-border)] bg-[color:color-mix(in_srgb,var(--theme-bg)_90%,transparent)] backdrop-blur">
         <div className="flex h-16 items-center justify-between px-4 md:px-6">
           <div className="flex items-center gap-4">
             {onBack && (
               <button
                 onClick={onBack}
-                className="glass-button flex items-center gap-2 rounded-2xl px-4 py-2 text-sm font-bold text-slate-100"
+                className="glass-button flex items-center gap-2 rounded-2xl px-4 py-2 text-sm font-bold text-[var(--theme-text)]"
               >
-                <ArrowLeft className="h-4 w-4 text-violet-400" />
+                <ArrowLeft className="h-4 w-4 text-[var(--theme-accent-soft)]" />
                 Back to Courses
               </button>
             )}
-            <div className="hidden h-6 w-px bg-slate-800 md:block"></div>
-            <p className="hidden max-w-[300px] text-xs font-bold uppercase tracking-wider text-slate-400 md:block">
+            <div className="hidden h-6 w-px bg-[var(--theme-border)] md:block"></div>
+            <p className="hidden max-w-[300px] text-xs font-bold uppercase tracking-wider text-[var(--theme-text-faint)] md:block">
               {courseTitle}
             </p>
           </div>
@@ -285,25 +285,25 @@ export default function LocalCoursePlayer({
                 onChange={(e) => setPlaybackSpeed(parseFloat(e.target.value))}
                 className="min-w-[3.75rem] bg-transparent text-right text-sm font-bold tracking-tight text-white/75 focus:outline-none cursor-pointer"
               >
-                <option value="0.5" className="bg-slate-900 text-slate-200">
+                <option value="0.5" className="bg-[var(--theme-panel)] text-[var(--theme-text-soft)]">
                   0.5x
                 </option>
-                <option value="0.75" className="bg-slate-900 text-slate-200">
+                <option value="0.75" className="bg-[var(--theme-panel)] text-[var(--theme-text-soft)]">
                   0.75x
                 </option>
-                <option value="1" className="bg-slate-900 text-slate-200">
+                <option value="1" className="bg-[var(--theme-panel)] text-[var(--theme-text-soft)]">
                   1.0x
                 </option>
-                <option value="1.25" className="bg-slate-900 text-slate-200">
+                <option value="1.25" className="bg-[var(--theme-panel)] text-[var(--theme-text-soft)]">
                   1.25x
                 </option>
-                <option value="1.5" className="bg-slate-900 text-slate-200">
+                <option value="1.5" className="bg-[var(--theme-panel)] text-[var(--theme-text-soft)]">
                   1.5x
                 </option>
-                <option value="1.75" className="bg-slate-900 text-slate-200">
+                <option value="1.75" className="bg-[var(--theme-panel)] text-[var(--theme-text-soft)]">
                   1.75x
                 </option>
-                <option value="2" className="bg-slate-900 text-slate-200">
+                <option value="2" className="bg-[var(--theme-panel)] text-[var(--theme-text-soft)]">
                   2.0x
                 </option>
               </select>
@@ -313,7 +313,7 @@ export default function LocalCoursePlayer({
       </header>
 
       <main className="flex flex-1 overflow-hidden">
-        <div className="h-full w-[360px] shrink-0 overflow-y-auto border-r border-slate-800 bg-slate-900/50 scrollbar-thin scrollbar-thumb-slate-800 scrollbar-track-transparent">
+        <div className="h-full w-[360px] shrink-0 overflow-y-auto border-r border-[var(--theme-border)] bg-[color:color-mix(in_srgb,var(--theme-panel)_56%,transparent)] scrollbar-thin scrollbar-track-transparent">
           <CourseSidebar
             courseTitle={courseTitle}
             courseSubtitle={courseSubtitle}
@@ -331,7 +331,7 @@ export default function LocalCoursePlayer({
           />
         </div>
 
-        <div className="h-full flex-1 overflow-y-auto scrollbar-thin scrollbar-thumb-slate-800 scrollbar-track-transparent">
+        <div className="h-full flex-1 overflow-y-auto scrollbar-thin scrollbar-track-transparent">
           <VideoDisplay
             activeLesson={activeLesson}
             courseTitle={courseTitle}
