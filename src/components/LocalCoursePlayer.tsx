@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState, useCallback } from "react";
-import { ArrowLeft, CheckCircle, ChevronRight } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 import type { LessonVideo } from "../types/course";
 import {
   buildCourseKey,
@@ -308,29 +308,6 @@ export default function LocalCoursePlayer({
                 </option>
               </select>
             </div>
-
-            <button
-              onClick={handleCompleteAndContinue}
-              disabled={!hasNextLesson && isCurrentLessonCompleted}
-              className={[
-                "flex items-center gap-2 rounded-2xl px-5 py-2.5 text-sm font-bold disabled:opacity-50 disabled:cursor-not-allowed",
-                isCurrentLessonCompleted
-                  ? "glass-button"
-                  : "glass-button-primary",
-              ].join(" ")}
-            >
-              {isCurrentLessonCompleted ? (
-                <>
-                  <ChevronRight className="h-4 w-4" />
-                  Next Lesson
-                </>
-              ) : (
-                <>
-                  <CheckCircle className="h-4 w-4" />
-                  Complete & Continue
-                </>
-              )}
-            </button>
           </div>
         </div>
       </header>
