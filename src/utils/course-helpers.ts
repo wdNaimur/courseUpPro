@@ -13,7 +13,10 @@ export function isVideoFile(file: File) {
 }
 
 export function getRelativePath(file: File) {
-  return (file as File & { webkitRelativePath?: string }).webkitRelativePath || file.name;
+  return (
+    (file as File & { webkitRelativePath?: string }).webkitRelativePath ||
+    file.name
+  );
 }
 
 export function getCourseFolderName(files: File[]) {
@@ -33,6 +36,46 @@ export function normalizeTitle(rawText: string) {
 export function buildCourseKey(folderName: string, lessons: LessonVideo[]) {
   const signature = lessons.map((lesson) => lesson.path).join("|");
   return `local-course-progress::${folderName}::${signature}`;
+}
+
+function normalizeFolderKey(value: string) {
+  return value.trim().toLowerCase();
+}
+
+export function stripSharedWrapperFolder(
+  lessons: LessonVideo[],
+  courseFolderName: string,
+) {
+  if (!lessons.length) return lessons;
+
+  const wrapperCandidate = lessons[0].folderParts[0];
+  if (!wrapperCandidate) return lessons;
+
+  const normalizedCourseFolderName = normalizeFolderKey(courseFolderName);
+  const normalizedWrapperCandidate = normalizeFolderKey(wrapperCandidate);
+
+  const matchesCourseFolderName =
+    normalizedWrapperCandidate === normalizedCourseFolderName;
+  if (!matchesCourseFolderName) return lessons;
+
+  const hasSharedWrapper = lessons.every(
+    (lesson) =>
+      lesson.folderParts.length >= 1 &&
+      normalizeFolderKey(lesson.folderParts[0]) === normalizedWrapperCandidate,
+  );
+
+  if (!hasSharedWrapper) return lessons;
+
+  return lessons.map((lesson) => {
+    const normalizedFolderParts = lesson.folderParts.slice(1);
+    return {
+      ...lesson,
+      folderParts: normalizedFolderParts,
+      folderLabel: normalizedFolderParts.length
+        ? normalizedFolderParts.join(" / ")
+        : "Main section",
+    };
+  });
 }
 
 export function createFolderTree(lessons: LessonVideo[]) {

@@ -9,6 +9,7 @@ import {
   getRelativePath,
   isVideoFile,
   normalizeTitle,
+  stripSharedWrapperFolder,
 } from "../utils/course-helpers";
 import CourseSidebar from "./player/CourseSidebar";
 import VideoDisplay from "./player/VideoDisplay";
@@ -208,13 +209,15 @@ export default function LocalCoursePlayer({
         displayIndex: index + 1,
       }));
 
-    const courseKey = buildCourseKey(folderName, mappedLessons);
+    const normalizedLessons = stripSharedWrapperFolder(mappedLessons, folderName);
 
-    setLessonVideos(mappedLessons);
+    const courseKey = buildCourseKey(folderName, normalizedLessons);
+
+    setLessonVideos(normalizedLessons);
     setActiveCourseKey(courseKey);
     setCourseTitle(folderName);
     setCourseSubtitle(
-      `${mappedLessons.length} lesson video${mappedLessons.length > 1 ? "s" : ""} found in this course folder.`,
+      `${normalizedLessons.length} lesson video${normalizedLessons.length > 1 ? "s" : ""} found in this course folder.`,
     );
 
     try {
@@ -226,12 +229,12 @@ export default function LocalCoursePlayer({
 
     setAccordionState({});
 
-    const firstIncompleteLesson = mappedLessons.find(
+    const firstIncompleteLesson = normalizedLessons.find(
       (lesson) =>
         !JSON.parse(localStorage.getItem(courseKey) || "{}")[lesson.id],
     );
 
-    const firstLessonToOpen = firstIncompleteLesson || mappedLessons[0];
+    const firstLessonToOpen = firstIncompleteLesson || normalizedLessons[0];
 
     if (firstLessonToOpen) {
       setActiveLessonId(firstLessonToOpen.id);
