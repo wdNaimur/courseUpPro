@@ -1,4 +1,12 @@
-import React, { useState, useEffect, useRef, useCallback } from "react";
+import {
+  useState,
+  useEffect,
+  useRef,
+  useCallback,
+  type ChangeEvent,
+  type MouseEvent,
+  type RefObject,
+} from "react";
 import {
   PlayCircle,
   ChevronLeft,
@@ -15,22 +23,26 @@ import type { LessonVideo } from "../../types/course";
 
 type VideoDisplayProps = {
   activeLesson: LessonVideo | null;
-  videoRef: React.RefObject<HTMLVideoElement | null>;
+  courseTitle: string;
+  videoRef: RefObject<HTMLVideoElement | null>;
   onCompleteAndContinue: () => void;
   onPreviousLesson: () => void;
   hasNextLesson: boolean;
   hasPreviousLesson: boolean;
+  isCurrentLessonCompleted: boolean;
   formatLessonMeta: (lesson: LessonVideo) => string;
   nextLessonTitle?: string;
 };
 
 export default function VideoDisplay({
   activeLesson,
+  courseTitle,
   videoRef,
   onCompleteAndContinue,
   onPreviousLesson,
   hasNextLesson,
   hasPreviousLesson,
+  isCurrentLessonCompleted,
   formatLessonMeta,
   nextLessonTitle,
 }: VideoDisplayProps) {
@@ -249,7 +261,7 @@ export default function VideoDisplay({
         if (!isInteractingWithControls) {
           setShowPauseOverlay(true);
         }
-      }, 5000);
+      }, 3000);
     } else {
       setShowPauseOverlay(false);
     }
@@ -280,7 +292,7 @@ export default function VideoDisplay({
     };
   }, [centerAction]);
 
-  const handleSeek = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleSeek = (event: ChangeEvent<HTMLInputElement>) => {
     const video = videoRef.current;
     if (!video) return;
     const nextTime = Number(event.target.value);
@@ -288,7 +300,7 @@ export default function VideoDisplay({
     setCurrentTime(nextTime);
   };
 
-  const handleVolumeChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleVolumeChange = (event: ChangeEvent<HTMLInputElement>) => {
     const video = videoRef.current;
     if (!video) return;
     const nextVolume = Number(event.target.value);
@@ -340,6 +352,16 @@ export default function VideoDisplay({
     return `${String(mins).padStart(2, "0")}:${String(secs).padStart(2, "0")}`;
   };
 
+  const getPauseTitle = (title: string) =>
+    title.replace(/^\s*\d+[\s._-]*/, "").trim() || title;
+
+  const controlButtonClassName =
+    "border border-white/20 bg-white/12 text-white shadow-2xl backdrop-blur-md transition hover:bg-white/18 active:scale-95";
+  const navButtonClassName =
+    "border border-white/20 bg-white/12 text-white shadow-2xl backdrop-blur-md transition hover:bg-white/18 active:scale-90";
+  const primaryNavButtonClassName =
+    "border border-violet-500/40 bg-violet-600/90 text-white shadow-2xl shadow-violet-600/25 transition hover:bg-violet-500 active:scale-90";
+
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       if (!activeLesson) return;
@@ -384,7 +406,7 @@ export default function VideoDisplay({
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [activeLesson, isMuted]);
 
-  const handleContainerClick = (event: React.MouseEvent<HTMLDivElement>) => {
+  const handleContainerClick = (event: MouseEvent<HTMLDivElement>) => {
     if (isFullscreen) {
       handleMouseMove();
     }
@@ -450,7 +472,7 @@ export default function VideoDisplay({
                 onClick={togglePlayPause}
                 onMouseEnter={handleControlsMouseEnter}
                 onMouseLeave={handleControlsMouseLeave}
-                className="pointer-events-auto grid h-24 w-24 place-items-center rounded-full border border-white/20 bg-white/12 text-white shadow-2xl backdrop-blur-md transition hover:scale-105 hover:bg-white/18 active:scale-95 md:h-28 md:w-28"
+                className="pointer-events-auto grid h-24 w-24 place-items-center rounded-full border border-white/20 bg-white/12 text-white shadow-2xl backdrop-blur-md transition hover:bg-white/18 active:scale-95 md:h-28 md:w-28"
                 title="Resume playback"
               >
                 <Play className="ml-1 h-10 w-10 fill-current md:h-12 md:w-12" />
@@ -459,11 +481,11 @@ export default function VideoDisplay({
 
             <div className="pointer-events-none absolute inset-x-0 top-0 bg-gradient-to-b from-black/85 via-black/35 to-transparent px-6 pb-16 pt-6 md:px-10 md:pt-8">
               <div className="max-w-3xl">
-                <p className="text-[11px] font-black uppercase tracking-[0.35em] text-white/45">
-                  Paused
+                <p className="mt-3 text-sm font-semibold text-white/60 md:text-base">
+                  {courseTitle}
                 </p>
                 <h2 className="mt-3 text-2xl font-black text-white md:text-4xl">
-                  {activeLesson.title}
+                  {getPauseTitle(activeLesson.title)}
                 </h2>
                 <p className="mt-3 text-sm font-semibold text-white/65 md:text-base">
                   {formatTime(currentTime)} / {formatTime(duration)}
@@ -514,7 +536,7 @@ export default function VideoDisplay({
                   onClick={togglePlayPause}
                   onMouseEnter={handleControlsMouseEnter}
                   onMouseLeave={handleControlsMouseLeave}
-                  className="flex h-8 w-8 items-center justify-center rounded-full bg-black/60 text-white transition hover:bg-black/80 md:h-9 md:w-9"
+                  className={`flex h-8 w-8 items-center justify-center rounded-full md:h-9 md:w-9 ${controlButtonClassName}`}
                   title={isPlaying ? "Pause" : "Play"}
                 >
                   {isPlaying ? (
@@ -532,7 +554,7 @@ export default function VideoDisplay({
                   onClick={toggleMute}
                   onMouseEnter={handleControlsMouseEnter}
                   onMouseLeave={handleControlsMouseLeave}
-                  className="flex h-8 w-8 items-center justify-center rounded-full bg-black/60 text-white transition hover:bg-black/80 md:h-9 md:w-9"
+                  className={`flex h-8 w-8 items-center justify-center rounded-full md:h-9 md:w-9 ${controlButtonClassName}`}
                   title={isMuted ? "Unmute" : "Mute"}
                 >
                   {isMuted ? (
@@ -567,7 +589,7 @@ export default function VideoDisplay({
                 onClick={toggleFullscreen}
                 onMouseEnter={handleControlsMouseEnter}
                 onMouseLeave={handleControlsMouseLeave}
-                className="flex h-8 w-8 items-center justify-center rounded-full bg-black/60 text-white transition hover:bg-black/80 md:h-9 md:w-9"
+                className={`flex h-8 w-8 items-center justify-center rounded-full md:h-9 md:w-9 ${controlButtonClassName}`}
                 title={isFullscreen ? "Exit Fullscreen" : "Enter Fullscreen"}
               >
                 {isFullscreen ? (
@@ -669,7 +691,7 @@ export default function VideoDisplay({
               onMouseLeave={handleControlsMouseLeave}
               disabled={!hasPreviousLesson}
               className={[
-                "pointer-events-auto flex h-12 w-12 items-center justify-center rounded-full bg-black/40 text-white backdrop-blur-md transition-all hover:bg-black/60 active:scale-90 disabled:opacity-0 md:h-16 md:w-16",
+                `pointer-events-auto flex h-12 w-12 items-center justify-center rounded-full disabled:opacity-0 md:h-16 md:w-16 ${navButtonClassName}`,
                 !isFullscreen && "hidden group-hover:flex",
               ].join(" ")}
               title="Previous Lesson"
@@ -687,7 +709,11 @@ export default function VideoDisplay({
               onMouseLeave={handleControlsMouseLeave}
               disabled={!hasNextLesson}
               className={[
-                "pointer-events-auto flex h-12 w-12 items-center justify-center rounded-full bg-violet-600/90 text-white shadow-2xl transition-all hover:bg-violet-500 active:scale-90 disabled:opacity-0 md:h-16 md:w-16",
+                `pointer-events-auto flex h-12 w-12 items-center justify-center rounded-full disabled:opacity-0 md:h-16 md:w-16 ${
+                  isCurrentLessonCompleted
+                    ? navButtonClassName
+                    : primaryNavButtonClassName
+                }`,
                 !isFullscreen && "hidden group-hover:flex",
               ].join(" ")}
               title="Complete & Next"
