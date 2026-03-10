@@ -2,6 +2,10 @@ import type { FolderNode, LessonVideo } from "../types/course";
 
 const supportedVideoExtensions = [".mp4", ".webm", ".ogg", ".mov", ".m4v"];
 
+function stripFileExtension(value: string) {
+  return value.replace(/\.(mp4|webm|ogg|mov|m4v)$/i, "");
+}
+
 export function isVideoFile(file: File) {
   const fileName = (file.name || "").toLowerCase();
   const mimeType = (file.type || "").toLowerCase();
@@ -26,11 +30,48 @@ export function getCourseFolderName(files: File[]) {
 }
 
 export function normalizeTitle(rawText: string) {
-  return rawText
-    .replace(/\.[^/.]+$/, "")
+  return stripFileExtension(rawText)
+    .replace(
+      /^\s*\d+(?:[._-]\d+)*\s*(?:[._-]|\s)+(?:section|chapter|lesson|lecture|module|part|unit)\s*(?:\([^)]+\))?\s*/i,
+      "",
+    )
+    .replace(/^\s*\d+(?:[._-]\d+)*\s*(?:[._-]|\s)+/, "")
     .replace(/[_-]+/g, " ")
     .replace(/\s+/g, " ")
     .trim();
+}
+
+export function normalizeSectionTitle(rawText: string) {
+  const withoutExtension = stripFileExtension(rawText).trim();
+  const sectionMatch = withoutExtension.match(
+    /^\s*(\d+(?:[._-]\d+)*)\s*(?:[._-]|\s)+(section|chapter|lesson|lecture|module|part|unit)\s*(?:\(([^)]+)\))?\s+(.+)$/i,
+  );
+
+  if (sectionMatch) {
+    const [, rawNumber, , rawVariant, rawTitle] = sectionMatch;
+    const normalizedNumber = rawNumber.replace(/[._-]+/g, ".");
+    const variant = rawVariant ? ` (${rawVariant.trim()})` : "";
+    const title = normalizeTitle(rawTitle);
+    return `Section ${normalizedNumber}${variant}: ${title}`;
+  }
+
+  const leadingNumberMatch = withoutExtension.match(
+    /^\s*(\d+(?:[._-]\d+)*)\s*(?:[._-]|\s)+(.+)$/,
+  );
+
+  if (leadingNumberMatch) {
+    const [, rawNumber, rawTitle] = leadingNumberMatch;
+    const normalizedNumber = rawNumber.replace(/[._-]+/g, ".");
+    return `Section ${normalizedNumber}: ${normalizeTitle(rawTitle)}`;
+  }
+
+  return normalizeTitle(rawText);
+}
+
+function formatFolderLabel(folderParts: string[]) {
+  return folderParts.length
+    ? folderParts.map((part) => normalizeSectionTitle(part)).join(" / ")
+    : "Main section";
 }
 
 export function buildCourseKey(folderName: string, lessons: LessonVideo[]) {
@@ -71,9 +112,7 @@ export function stripSharedWrapperFolder(
     return {
       ...lesson,
       folderParts: normalizedFolderParts,
-      folderLabel: normalizedFolderParts.length
-        ? normalizedFolderParts.join(" / ")
-        : "Main section",
+      folderLabel: formatFolderLabel(normalizedFolderParts),
     };
   });
 }

@@ -14,7 +14,7 @@ export default function CourseCard({ course, onSelect, onRemove }: CourseCardPro
 
   return (
     <div 
-      className="group relative flex flex-col overflow-hidden rounded-3xl border border-slate-800 bg-slate-900/50 shadow-lg transition-all hover:border-violet-500/50 hover:shadow-2xl hover:shadow-violet-500/10 cursor-pointer"
+      className="glass-panel group relative flex flex-col overflow-hidden rounded-3xl transition-all hover:border-violet-500/35 hover:shadow-2xl hover:shadow-violet-500/10 cursor-pointer"
       onClick={() => onSelect(course)}
     >
       <div className="aspect-video relative overflow-hidden bg-slate-950">
@@ -31,7 +31,7 @@ export default function CourseCard({ course, onSelect, onRemove }: CourseCardPro
         )}
         
         <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-transparent to-transparent opacity-0 transition-opacity group-hover:opacity-100 flex items-center justify-center">
-          <div className="rounded-full bg-violet-600 p-4 text-white shadow-xl">
+          <div className="glass-button-primary rounded-full p-4 text-white">
             <PlayCircle className="h-8 w-8" />
           </div>
         </div>
@@ -66,7 +66,7 @@ export default function CourseCard({ course, onSelect, onRemove }: CourseCardPro
           e.stopPropagation();
           onRemove(course.id);
         }}
-        className="absolute top-4 right-4 z-10 rounded-full bg-slate-950/50 p-2 text-slate-400 backdrop-blur hover:bg-red-500/20 hover:text-red-400 opacity-0 transition-opacity group-hover:opacity-100"
+        className="glass-button absolute top-4 right-4 z-10 rounded-full p-2 text-slate-200 opacity-0 transition-opacity group-hover:opacity-100 hover:border-red-400/35 hover:bg-red-500/18 hover:text-red-100"
         title="Remove course from list"
       >
         <Trash2 className="h-4 w-4" />

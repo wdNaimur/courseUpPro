@@ -1,4 +1,4 @@
-import { CheckCircle2, Play, FileVideo } from "lucide-react";
+import { Check, Play, FileVideo } from "lucide-react";
 import type { LessonVideo } from "../../types/course";
 
 type LessonItemProps = {
@@ -17,23 +17,24 @@ export default function LessonItem({
   onSelect,
   onToggleComplete,
 }: LessonItemProps) {
+  const canToggleComplete = isCompleted || isActive;
+
   return (
     <article
       onClick={() => onSelect(lesson.id)}
       className={[
-        "group flex w-full min-w-0 items-center gap-2.5 rounded-lg border p-2 transition-all cursor-pointer select-none",
+        "group flex w-full min-w-0 items-center gap-3 rounded-2xl border p-2.5 transition-all cursor-pointer select-none backdrop-blur-md",
         isActive
-          ? "border-violet-500/50 bg-violet-500/10 ring-1 ring-violet-500/20 shadow-md"
-          : "border-slate-800 bg-slate-900/40 hover:border-slate-700 hover:bg-slate-800/60",
+          ? "border-violet-400/35 bg-violet-500/18 shadow-[0_18px_40px_rgba(76,29,149,0.25)]"
+          : "border-white/10 bg-white/6 hover:border-white/18 hover:bg-white/10",
       ].join(" ")}
     >
-      {/* Icon Area */}
       <div
         className={[
-          "flex h-7 w-7 shrink-0 items-center justify-center rounded-md border transition-all",
+          "flex h-8 w-8 shrink-0 items-center justify-center rounded-xl border transition-all",
           isActive
-            ? "bg-violet-500 border-violet-400 text-white"
-            : "bg-slate-950 border-slate-800 text-slate-500",
+            ? "border-violet-300/50 bg-violet-500/85 text-white"
+            : "border-white/10 bg-black/20 text-slate-400",
         ].join(" ")}
       >
         {isActive ? (
@@ -43,15 +44,11 @@ export default function LessonItem({
         )}
       </div>
 
-      {/* Text Info */}
       <div className="flex min-w-0 flex-1 flex-col">
         <span
           className={[
             "text-[12px] font-semibold tracking-tight transition-colors",
             isActive ? "text-white" : "text-slate-300",
-            isCompleted && !isActive
-              ? "text-slate-500 line-through decoration-slate-700"
-              : "",
           ].join(" ")}
         >
           {lesson.title}
@@ -61,18 +58,24 @@ export default function LessonItem({
         </span>
       </div>
 
-      {/* Checkbox */}
       <button
         type="button"
         onClick={(event) => {
           event.stopPropagation();
+          if (!canToggleComplete) return;
           onToggleComplete(lesson.id, !isCompleted);
         }}
+        disabled={!canToggleComplete}
+        className={[
+          "flex h-6 w-6 shrink-0 items-center justify-center self-center rounded-full p-0 disabled:!cursor-pointer",
+          isCompleted ? "glass-button-primary" : "glass-button",
+          !canToggleComplete && "opacity-45",
+        ].join(" ")}
       >
-        <CheckCircle2
+        <Check
           className={[
-            "h-3.5 w-3.5",
-            isCompleted ? "opacity-100 text-violet-500" : "opacity-40",
+            "h-3.5 w-3.5 translate-x-[0.5px]",
+            isCompleted ? "opacity-100 text-violet-300" : "opacity-40",
           ].join(" ")}
         />
       </button>

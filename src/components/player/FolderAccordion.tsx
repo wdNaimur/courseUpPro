@@ -1,6 +1,9 @@
-import { ChevronRight, Video } from "lucide-react";
+import { Check, ChevronRight, Video } from "lucide-react";
 import type { FolderNode, LessonVideo } from "../../types/course";
-import { countLessonsInNode } from "../../utils/course-helpers";
+import {
+  countLessonsInNode,
+  normalizeSectionTitle,
+} from "../../utils/course-helpers";
 import LessonItem from "./LessonItem";
 
 type FolderAccordionProps = {
@@ -48,7 +51,7 @@ export default function FolderAccordion({
   );
 
   return (
-    <div className="flex flex-col border-t border-slate-800/60">
+    <div className="flex flex-col gap-2">
       {folderEntries.map(([folderName, folderNode]) => {
         const folderKey = parentKey ? `${parentKey}/${folderName}` : folderName;
         const isOpen = getAccordionOpen(folderKey, false);
@@ -61,17 +64,17 @@ export default function FolderAccordion({
         return (
           <div
             key={folderKey}
-            className="border-b border-slate-800/60 transition-colors"
+            className="glass-panel overflow-hidden rounded-2xl transition-colors"
           >
             <button
               type="button"
               onClick={() => setAccordionOpen(folderKey, !isOpen)}
-              className="flex w-full items-center justify-between gap-4 px-4 py-4 text-left hover:bg-slate-800/30"
+              className="flex w-full items-center justify-between gap-4 px-4 py-4 text-left hover:bg-white/8"
               aria-expanded={isOpen}
             >
-              <div className="flex min-w-0 flex-col gap-1">
-                <span className="text-sm font-bold text-slate-100 md:text-[15px]">
-                  {folderName}
+              <div className="flex min-w-0 flex-1 flex-col gap-1">
+                <span className="block w-full text-[13px] font-bold text-slate-100 md:text-sm">
+                  {normalizeSectionTitle(folderName)}
                 </span>
                 <span className="text-[11px] font-medium text-slate-500">
                   {completedLessons} / {totalLessons} lessons
@@ -80,7 +83,7 @@ export default function FolderAccordion({
 
               <ChevronRight
                 className={[
-                  "h-5 w-5 shrink-0 text-slate-500 transition-transform duration-200",
+                  "h-5 w-5 shrink-0 text-slate-400 transition-transform duration-200",
                   isOpen ? "rotate-90" : "rotate-0",
                 ].join(" ")}
               />
@@ -89,8 +92,8 @@ export default function FolderAccordion({
             {isOpen ? (
               <div
                 className={[
-                  "flex flex-col gap-1 bg-slate-950/30 p-2",
-                  depth > 0 ? "ml-3 border-l border-slate-800/60 pl-3" : "",
+                  "flex flex-col gap-2 bg-slate-950/18 p-2",
+                  depth > 0 ? "ml-3 border-l border-white/8 pl-3" : "",
                 ].join(" ")}
               >
                 <FolderAccordion
@@ -136,21 +139,28 @@ export default function FolderAccordion({
       })}
 
       {depth === 0 && node.lessons.length ? (
-        <div className="border-b border-slate-800/60 bg-slate-900/20">
+        <div className="glass-panel overflow-hidden rounded-2xl">
           <div className="flex items-center justify-between px-4 py-3">
-            <div className="flex min-w-0 flex-col gap-1">
+            <div className="flex min-w-0 flex-1 flex-col gap-1">
               <span className="text-[15px] font-bold text-slate-100">
                 Main section
               </span>
-              <span className="text-[11px] font-medium text-slate-500">
-                {node.lessons.filter((l) => getLessonCompletion(l.id)).length} /{" "}
-                {node.lessons.length} lessons
-              </span>
+              <div className="flex items-center gap-2">
+                <span className="text-[11px] font-medium text-slate-500">
+                  {node.lessons.filter((l) => getLessonCompletion(l.id)).length} /{" "}
+                  {node.lessons.length} lessons
+                </span>
+                {node.lessons.every((lesson) => getLessonCompletion(lesson.id)) && (
+                  <span className="glass-button-primary flex h-5 w-5 items-center justify-center rounded-full p-0">
+                    <Check className="h-3 w-3 translate-x-[0.5px] translate-y-[-0.5px]" />
+                  </span>
+                )}
+              </div>
             </div>
-            <Video className="h-4 w-4 shrink-0 text-slate-600" />
+            <Video className="h-4 w-4 shrink-0 text-slate-500" />
           </div>
 
-          <div className="flex flex-col gap-1 p-2">
+          <div className="flex flex-col gap-2 p-2">
             {node.lessons.map((lesson) => (
               <LessonItem
                 key={lesson.id}

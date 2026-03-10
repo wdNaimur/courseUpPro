@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, useCallback } from "react";
 import { ArrowLeft, CheckCircle, ChevronRight } from "lucide-react";
 import type { LessonVideo } from "../types/course";
 import {
@@ -9,6 +9,7 @@ import {
   getRelativePath,
   isVideoFile,
   normalizeTitle,
+  normalizeSectionTitle,
   stripSharedWrapperFolder,
 } from "../utils/course-helpers";
 import CourseSidebar from "./player/CourseSidebar";
@@ -171,7 +172,7 @@ export default function LocalCoursePlayer({
     return undefined;
   }, [lessonVideos, activeLessonId]);
 
-  const processFiles = React.useCallback((files: File[]) => {
+  const processFiles = useCallback((files: File[]) => {
     const videoFiles = files.filter(isVideoFile);
 
     if (!videoFiles.length) return;
@@ -185,7 +186,7 @@ export default function LocalCoursePlayer({
         const fileName = pathParts[pathParts.length - 1];
         const folderParts = pathParts.length > 2 ? pathParts.slice(1, -1) : [];
         const folderLabel = folderParts.length
-          ? folderParts.join(" / ")
+          ? folderParts.map((part) => normalizeSectionTitle(part)).join(" / ")
           : "Main section";
 
         return {
@@ -209,7 +210,10 @@ export default function LocalCoursePlayer({
         displayIndex: index + 1,
       }));
 
-    const normalizedLessons = stripSharedWrapperFolder(mappedLessons, folderName);
+    const normalizedLessons = stripSharedWrapperFolder(
+      mappedLessons,
+      folderName,
+    );
 
     const courseKey = buildCourseKey(folderName, normalizedLessons);
 
@@ -259,7 +263,7 @@ export default function LocalCoursePlayer({
             {onBack && (
               <button
                 onClick={onBack}
-                className="flex items-center gap-2 rounded-xl bg-slate-900 border border-slate-800 px-4 py-2 text-sm font-bold text-slate-200 transition hover:border-violet-500 hover:text-white active:scale-95"
+                className="glass-button flex items-center gap-2 rounded-2xl px-4 py-2 text-sm font-bold text-slate-100"
               >
                 <ArrowLeft className="h-4 w-4 text-violet-400" />
                 Back to Courses
@@ -272,14 +276,14 @@ export default function LocalCoursePlayer({
           </div>
 
           <div className="flex items-center gap-4">
-            <div className="flex items-center gap-2 rounded-xl border border-slate-800 bg-slate-900 px-3 py-1.5 shadow-sm transition hover:border-slate-700">
-              <span className="text-[10px] font-black uppercase tracking-widest text-slate-500">
+            <div className="glass-button flex items-center rounded-2xl px-3 py-1.5">
+              <span className="text-[12px] font-bold uppercase text-white/75 mt-0.5">
                 Speed
               </span>
               <select
                 value={playbackSpeed}
                 onChange={(e) => setPlaybackSpeed(parseFloat(e.target.value))}
-                className="bg-transparent text-sm font-bold text-slate-200 focus:outline-none cursor-pointer"
+                className="min-w-[3.75rem] bg-transparent text-right text-sm font-bold tracking-tight text-white/75 focus:outline-none cursor-pointer"
               >
                 <option value="0.5" className="bg-slate-900 text-slate-200">
                   0.5x
@@ -309,10 +313,10 @@ export default function LocalCoursePlayer({
               onClick={handleCompleteAndContinue}
               disabled={!hasNextLesson && isCurrentLessonCompleted}
               className={[
-                "flex items-center gap-2 rounded-xl px-5 py-2.5 text-sm font-bold shadow-lg transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed",
+                "flex items-center gap-2 rounded-2xl px-5 py-2.5 text-sm font-bold disabled:opacity-50 disabled:cursor-not-allowed",
                 isCurrentLessonCompleted
-                  ? "bg-slate-800 text-slate-300 hover:bg-slate-700"
-                  : "bg-violet-600 text-white hover:bg-violet-500 shadow-violet-600/20",
+                  ? "glass-button"
+                  : "glass-button-primary",
               ].join(" ")}
             >
               {isCurrentLessonCompleted ? (

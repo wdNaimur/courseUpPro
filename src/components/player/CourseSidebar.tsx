@@ -34,16 +34,22 @@ export default function CourseSidebar({
 }: CourseSidebarProps) {
   return (
     <aside className="flex min-h-0 flex-col border-slate-800 bg-slate-900/50 lg:border-r">
-      <div className="flex flex-col gap-4 border-b border-slate-800 bg-slate-900/80 p-5">
+      <div className="glass-panel m-2 mb-0 flex flex-col gap-4 rounded-3xl p-5">
         <div>
-          <h2 className="text-[17px] font-black leading-tight text-white">{courseTitle}</h2>
-          <p className="mt-1.5 text-xs font-medium text-slate-500">{courseSubtitle}</p>
+          <h2 className="text-[17px] font-black leading-tight text-white">
+            {courseTitle}
+          </h2>
+          <p className="mt-1.5 text-xs font-medium text-slate-500">
+            {courseSubtitle}
+          </p>
         </div>
 
         <div className="space-y-2.5">
           <div className="flex items-center justify-between text-[11px] font-bold uppercase tracking-wider text-slate-400">
             <span>{progressPercent}% Complete</span>
-            <span>{completedCount} / {totalLessons}</span>
+            <span>
+              {completedCount} / {totalLessons}
+            </span>
           </div>
           <div className="h-1.5 overflow-hidden rounded-full bg-slate-950">
             <div
@@ -54,7 +60,7 @@ export default function CourseSidebar({
         </div>
       </div>
 
-      <div className="flex-1 overflow-y-auto scrollbar-thin scrollbar-thumb-slate-800 scrollbar-track-transparent">
+      <div className="flex-1 overflow-y-auto scrollbar-thin scrollbar-thumb-slate-800 scrollbar-track-transparent m-2">
         {totalLessons > 0 ? (
           <FolderAccordion
             node={folderTree}
@@ -68,7 +74,9 @@ export default function CourseSidebar({
           />
         ) : (
           <div className="p-8 text-center">
-            <p className="text-sm font-medium text-slate-500">No lessons found in this folder.</p>
+            <p className="text-sm font-medium text-slate-500">
+              No lessons found in this folder.
+            </p>
           </div>
         )}
       </div>

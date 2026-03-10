@@ -208,13 +208,13 @@ export default function HomePage({ onCourseSelect, filesCache, onPlayFromCache }
             <div className="flex gap-3">
               <button
                 onClick={handleCancelRemoveCourse}
-                className="flex-1 rounded-xl border border-slate-700 bg-slate-800 px-4 py-2.5 text-sm font-bold text-slate-200 transition hover:border-slate-600 hover:bg-slate-700"
+                className="glass-button flex-1 rounded-2xl px-4 py-2.5 text-sm font-bold"
               >
                 Cancel
               </button>
               <button
                 onClick={handleConfirmRemoveCourse}
-                className="flex-1 rounded-xl bg-red-600 px-4 py-2.5 text-sm font-bold text-white shadow-lg shadow-red-600/20 transition hover:bg-red-500 active:scale-95"
+                className="glass-button-danger flex-1 rounded-2xl px-4 py-2.5 text-sm font-bold"
               >
                 Delete Course
               </button>
@@ -250,7 +250,7 @@ export default function HomePage({ onCourseSelect, filesCache, onPlayFromCache }
           />
           <button
             onClick={handleAddCourse}
-            className="flex items-center gap-2 rounded-2xl bg-violet-600 px-6 py-4 font-bold text-white shadow-lg shadow-violet-600/20 transition-all hover:bg-violet-500 hover:-translate-y-1 active:scale-95"
+            className="glass-button-primary flex items-center gap-2 rounded-2xl px-6 py-4 font-bold text-white hover:-translate-y-1"
           >
             <Plus className="h-5 w-5" />
             Add New Course
@@ -293,7 +293,7 @@ export default function HomePage({ onCourseSelect, filesCache, onPlayFromCache }
           </p>
           <button
             onClick={handleAddCourse}
-            className="rounded-full border border-slate-700 px-8 py-3 font-semibold text-slate-300 hover:border-slate-500 transition-colors"
+            className="glass-button rounded-full px-8 py-3 font-semibold text-slate-100"
           >
             Select a folder
           </button>

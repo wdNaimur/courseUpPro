@@ -437,7 +437,7 @@ export default function VideoDisplay({
   }
 
   return (
-    <section className="flex flex-col gap-6 p-4 md:p-8">
+    <section className="flex flex-col gap-2 p-2">
       <div
         ref={containerRef}
         onMouseMove={handleMouseMove}
