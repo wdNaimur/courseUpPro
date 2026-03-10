@@ -44,12 +44,21 @@ export default function VideoDisplay({
   const [currentTime, setCurrentTime] = useState(0);
   const [volume, setVolume] = useState(1);
   const [isMuted, setIsMuted] = useState(false);
+  const [isInteractingWithControls, setIsInteractingWithControls] =
+    useState(false);
   const [centerAction, setCenterAction] = useState<"play" | "pause" | null>(
     null,
   );
   const timerRef = useRef<number | null>(null);
   const autoPlayTimerRef = useRef<number | null>(null);
   const centerActionTimerRef = useRef<number | null>(null);
+
+  const clearOverlayTimer = useCallback(() => {
+    if (timerRef.current) {
+      window.clearTimeout(timerRef.current);
+      timerRef.current = null;
+    }
+  }, []);
 
   const handlePlayNextNow = useCallback(() => {
     setShowAutoPlay(false);
@@ -60,15 +69,16 @@ export default function VideoDisplay({
     setShowAutoPlay(false);
   }, []);
 
-    useEffect(() => {
-      const handleFullscreenChange = () => {
-        setIsFullscreen(!!document.fullscreenElement);
-      };
-  
-      document.addEventListener("fullscreenchange", handleFullscreenChange);
-      return () => document.removeEventListener("fullscreenchange", handleFullscreenChange);
-    }, []);
-  
+  useEffect(() => {
+    const handleFullscreenChange = () => {
+      setIsFullscreen(!!document.fullscreenElement);
+    };
+
+    document.addEventListener("fullscreenchange", handleFullscreenChange);
+    return () =>
+      document.removeEventListener("fullscreenchange", handleFullscreenChange);
+  }, []);
+
   // Listen for video end
   useEffect(() => {
     const video = videoRef.current;
@@ -140,21 +150,54 @@ export default function VideoDisplay({
     };
   }, [showAutoPlay, countdown, handlePlayNextNow]);
 
+  useEffect(() => {
+    return () => {
+      clearOverlayTimer();
+    };
+  }, [clearOverlayTimer]);
+
   const handleMouseMove = () => {
     setShowOverlays(true);
-    if (timerRef.current) window.clearTimeout(timerRef.current);
+    clearOverlayTimer();
     timerRef.current = window.setTimeout(() => {
-      if (isFullscreen) setShowOverlays(false);
-    }, 2500);
+      if (isFullscreen && !isInteractingWithControls) {
+        setShowOverlays(false);
+      }
+    }, 500);
+  };
+
+  const handleControlsMouseEnter = () => {
+    setIsInteractingWithControls(true);
+    clearOverlayTimer();
+    if (isFullscreen) {
+      setShowOverlays(true);
+    }
+  };
+
+  const handleControlsMouseLeave = () => {
+    setIsInteractingWithControls(false);
+    if (isFullscreen) {
+      handleMouseMove();
+    }
   };
 
   useEffect(() => {
     if (isFullscreen) {
       setShowOverlays(true);
     } else {
+      clearOverlayTimer();
+      setIsInteractingWithControls(false);
       setShowOverlays(false);
     }
-  }, [isFullscreen]);
+  }, [isFullscreen, clearOverlayTimer]);
+
+  useEffect(() => {
+    setShowAutoPlay(false);
+    setCountdown(5);
+    if (isFullscreen) {
+      setShowOverlays(true);
+    }
+  }, [activeLesson, isFullscreen]);
 
   const toggleFullscreen = () => {
     if (!containerRef.current) return;
@@ -375,6 +418,8 @@ export default function VideoDisplay({
 
         {!showAutoPlay && (
           <div
+            onMouseEnter={handleControlsMouseEnter}
+            onMouseLeave={handleControlsMouseLeave}
             className={[
               "absolute inset-x-0 bottom-0 z-[55] bg-gradient-to-t from-black/80 via-black/40 to-transparent px-3 pb-3 pt-8 transition-opacity duration-300 md:px-4",
               isFullscreen ? (showOverlays ? "opacity-100" : "opacity-0") : "opacity-100",
@@ -388,6 +433,8 @@ export default function VideoDisplay({
                 step={0.1}
                 value={Math.min(currentTime, duration || 0)}
                 onChange={handleSeek}
+                onMouseEnter={handleControlsMouseEnter}
+                onMouseLeave={handleControlsMouseLeave}
                 style={{
                   background: getRangeBackground(
                     Math.min(currentTime, duration || 0),
@@ -404,6 +451,8 @@ export default function VideoDisplay({
               <div className="flex items-center gap-2">
                 <button
                   onClick={togglePlayPause}
+                  onMouseEnter={handleControlsMouseEnter}
+                  onMouseLeave={handleControlsMouseLeave}
                   className="flex h-8 w-8 items-center justify-center rounded-full bg-black/60 text-white transition hover:bg-black/80 md:h-9 md:w-9"
                   title={isPlaying ? "Pause" : "Play"}
                 >
@@ -420,6 +469,8 @@ export default function VideoDisplay({
 
                 <button
                   onClick={toggleMute}
+                  onMouseEnter={handleControlsMouseEnter}
+                  onMouseLeave={handleControlsMouseLeave}
                   className="flex h-8 w-8 items-center justify-center rounded-full bg-black/60 text-white transition hover:bg-black/80 md:h-9 md:w-9"
                   title={isMuted ? "Unmute" : "Mute"}
                 >
@@ -437,6 +488,8 @@ export default function VideoDisplay({
                   step={0.01}
                   value={isMuted ? 0 : volume}
                   onChange={handleVolumeChange}
+                  onMouseEnter={handleControlsMouseEnter}
+                  onMouseLeave={handleControlsMouseLeave}
                   style={{
                     background: getRangeBackground(
                       isMuted ? 0 : volume,
@@ -451,6 +504,8 @@ export default function VideoDisplay({
 
               <button
                 onClick={toggleFullscreen}
+                onMouseEnter={handleControlsMouseEnter}
+                onMouseLeave={handleControlsMouseLeave}
                 className="flex h-8 w-8 items-center justify-center rounded-full bg-black/60 text-white transition hover:bg-black/80 md:h-9 md:w-9"
                 title={isFullscreen ? "Exit Fullscreen" : "Enter Fullscreen"}
               >
@@ -532,16 +587,25 @@ export default function VideoDisplay({
         {/* Navigation Overlays */}
         {!showAutoPlay && (
           <div
+            onMouseEnter={handleControlsMouseEnter}
+            onMouseLeave={handleControlsMouseLeave}
             className={[
               "pointer-events-none absolute inset-0 z-50 flex items-center justify-between px-4 md:px-12 transition-opacity duration-300",
-              isFullscreen || showOverlays || !isFullscreen ? "opacity-100" : "opacity-0",
+              isFullscreen
+                ? showOverlays
+                  ? "opacity-100"
+                  : "opacity-0"
+                : "opacity-100",
             ].join(" ")}
           >
             <button
               onClick={(e) => {
                 e.preventDefault();
+                e.stopPropagation();
                 onPreviousLesson();
               }}
+              onMouseEnter={handleControlsMouseEnter}
+              onMouseLeave={handleControlsMouseLeave}
               disabled={!hasPreviousLesson}
               className={[
                 "pointer-events-auto flex h-12 w-12 items-center justify-center rounded-full bg-black/40 text-white backdrop-blur-md transition-all hover:bg-black/60 active:scale-90 disabled:opacity-0 md:h-16 md:w-16",
@@ -555,8 +619,11 @@ export default function VideoDisplay({
             <button
               onClick={(e) => {
                 e.preventDefault();
+                e.stopPropagation();
                 onCompleteAndContinue();
               }}
+              onMouseEnter={handleControlsMouseEnter}
+              onMouseLeave={handleControlsMouseLeave}
               disabled={!hasNextLesson}
               className={[
                 "pointer-events-auto flex h-12 w-12 items-center justify-center rounded-full bg-violet-600/90 text-white shadow-2xl transition-all hover:bg-violet-500 active:scale-90 disabled:opacity-0 md:h-16 md:w-16",

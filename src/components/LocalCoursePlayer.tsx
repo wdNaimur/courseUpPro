@@ -352,7 +352,6 @@ export default function LocalCoursePlayer({
 
         <div className="h-full flex-1 overflow-y-auto scrollbar-thin scrollbar-thumb-slate-800 scrollbar-track-transparent">
           <VideoDisplay
-            key={activeLessonId}
             activeLesson={activeLesson}
             videoRef={videoRef}
             onCompleteAndContinue={handleCompleteAndContinue}
