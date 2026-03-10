@@ -1,5 +1,5 @@
 import React, { useRef, useState } from "react";
-import { FolderOpen, Plus, Search } from "lucide-react";
+import { AlertTriangle, FolderOpen, Plus, Search } from "lucide-react";
 import type { CourseMetadata } from "../types/course";
 import CourseCard from "../components/home/CourseCard";
 import {
@@ -33,18 +33,29 @@ export default function HomePage({ onCourseSelect, filesCache, onPlayFromCache }
   });
   const [searchQuery, setSearchQuery] = useState("");
   const [isScanning, setIsScanning] = useState(false);
+  const [courseIdToDelete, setCourseIdToDelete] = useState<string | null>(null);
 
   const saveCourses = (newCourses: CourseMetadata[]) => {
     setCourses(newCourses);
     localStorage.setItem("local-course-player::courses", JSON.stringify(newCourses));
   };
 
-  const handleRemoveCourse = async (courseId: string) => {
-    if (window.confirm("Remove this course from your list? (Progress will be kept)")) {
-      const updated = courses.filter((c) => c.id !== courseId);
-      saveCourses(updated);
-      await db.removeHandle(courseId);
-    }
+  const handleRequestRemoveCourse = (courseId: string) => {
+    setCourseIdToDelete(courseId);
+  };
+
+  const handleConfirmRemoveCourse = async () => {
+    if (!courseIdToDelete) return;
+
+    const updated = courses.filter((c) => c.id !== courseIdToDelete);
+    saveCourses(updated);
+    localStorage.removeItem(courseIdToDelete);
+    await db.removeHandle(courseIdToDelete);
+    setCourseIdToDelete(null);
+  };
+
+  const handleCancelRemoveCourse = () => {
+    setCourseIdToDelete(null);
   };
 
   const processAndSelect = async (videoFiles: File[], allFiles: File[], handle?: FileSystemDirectoryHandle) => {
@@ -103,7 +114,7 @@ export default function HomePage({ onCourseSelect, filesCache, onPlayFromCache }
         // @ts-expect-error File System Access API
         const handle = await window.showDirectoryPicker();
         setIsScanning(true);
-        const allFiles = await scanDirectory(handle);
+        const allFiles = await scanDirectory(handle, handle.name);
         const videoFiles = allFiles.filter(isVideoFile);
         
         if (videoFiles.length === 0) {
@@ -150,7 +161,7 @@ export default function HomePage({ onCourseSelect, filesCache, onPlayFromCache }
           const hasPermission = await verifyPermission(handle);
           if (hasPermission) {
             setIsScanning(true);
-            const allFiles = await scanDirectory(handle);
+            const allFiles = await scanDirectory(handle, handle.name);
             const videoFiles = allFiles.filter(isVideoFile);
             onCourseSelect(metadata, videoFiles);
             return;
@@ -175,8 +186,43 @@ export default function HomePage({ onCourseSelect, filesCache, onPlayFromCache }
     c.title.toLowerCase().includes(searchQuery.toLowerCase())
   ).sort((a, b) => b.lastPlayedAt - a.lastPlayedAt);
 
+  const courseToDelete = courses.find((course) => course.id === courseIdToDelete) || null;
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-950 via-slate-950 to-slate-900 text-slate-100 px-4 py-8 md:px-12 lg:px-24">
+      {courseToDelete && (
+        <div className="fixed inset-0 z-[110] flex items-center justify-center bg-slate-950/80 px-4 backdrop-blur-md">
+          <div className="w-full max-w-md rounded-3xl border border-slate-800 bg-slate-900 p-6 shadow-2xl shadow-black/30">
+            <div className="mb-5 flex items-start gap-4">
+              <div className="rounded-xl border border-red-500/30 bg-red-500/10 p-2.5">
+                <AlertTriangle className="h-5 w-5 text-red-400" />
+              </div>
+              <div>
+                <h3 className="text-lg font-black text-white">Delete course?</h3>
+                <p className="mt-1 text-sm text-slate-400">
+                  This will remove <span className="font-semibold text-slate-200">{courseToDelete.title}</span> from your list and delete its saved progress.
+                </p>
+              </div>
+            </div>
+
+            <div className="flex gap-3">
+              <button
+                onClick={handleCancelRemoveCourse}
+                className="flex-1 rounded-xl border border-slate-700 bg-slate-800 px-4 py-2.5 text-sm font-bold text-slate-200 transition hover:border-slate-600 hover:bg-slate-700"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleConfirmRemoveCourse}
+                className="flex-1 rounded-xl bg-red-600 px-4 py-2.5 text-sm font-bold text-white shadow-lg shadow-red-600/20 transition hover:bg-red-500 active:scale-95"
+              >
+                Delete Course
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {isScanning && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/80 backdrop-blur-md">
           <div className="flex flex-col items-center gap-4">
@@ -232,7 +278,7 @@ export default function HomePage({ onCourseSelect, filesCache, onPlayFromCache }
               key={course.id} 
               course={course} 
               onSelect={handleCourseClick}
-              onRemove={handleRemoveCourse}
+              onRemove={handleRequestRemoveCourse}
             />
           ))}
         </div>
