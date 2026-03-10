@@ -18,6 +18,7 @@ export type CourseMetadata = {
   id: string;
   title: string;
   thumbnail?: string; // Base64 Data URL
+  priority?: string;
   path: string;
   lastPlayedAt: number;
   lessonCount: number;
