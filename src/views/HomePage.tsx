@@ -1,6 +1,5 @@
 import { useRef, useState } from "react";
 import {
-  AlertTriangle,
   ArrowUpRight,
   CheckCircle2,
   FolderOpen,
@@ -10,6 +9,7 @@ import {
   Library,
   Clock3,
   HardDriveDownload,
+  SlidersHorizontal,
 } from "lucide-react";
 import type { CourseMetadata } from "../types/course";
 import CourseCard from "../components/home/CourseCard";
@@ -20,12 +20,21 @@ import {
   isVideoFile,
 } from "../utils/course-helpers";
 import { db } from "../utils/db";
-import { scanDirectory, verifyPermission } from "../utils/file-system";
+import {
+  readHandleFileText,
+  scanDirectory,
+  verifyPermission,
+  verifyReadWritePermission,
+  writeHandleTextFile,
+} from "../utils/file-system";
 
 type HomePageProps = {
+  courses: CourseMetadata[];
+  onSaveCourses: (courses: CourseMetadata[]) => void;
   onCourseSelect: (courseMetadata: CourseMetadata, files: File[]) => void;
   filesCache: Record<string, File[]>;
   onPlayFromCache: (courseId: string) => boolean;
+  onOpenDashboard: () => void;
 };
 
 type PendingCourseImport = {
@@ -42,81 +51,46 @@ type PendingCourseImport = {
 const DEFAULT_COURSE_PRIORITY = "Standard";
 const APP_NAME = "CourseUp";
 
-function normalizeCourseMetadata(course: CourseMetadata): CourseMetadata {
-  return {
-    ...course,
-    priority: course.priority?.trim() || DEFAULT_COURSE_PRIORITY,
-  };
-}
-
-export default function HomePage({ onCourseSelect, filesCache, onPlayFromCache }: HomePageProps) {
+export default function HomePage({
+  courses,
+  onSaveCourses,
+  onCourseSelect,
+  filesCache,
+  onPlayFromCache,
+  onOpenDashboard,
+}: HomePageProps) {
   const fileInputRef = useRef<HTMLInputElement | null>(null);
-  const [courses, setCourses] = useState<CourseMetadata[]>(() => {
-    const saved = localStorage.getItem("local-course-player::courses");
-    if (saved) {
-      try {
-        const parsed = JSON.parse(saved);
-        return Array.isArray(parsed)
-          ? parsed.map((course) => normalizeCourseMetadata(course))
-          : [];
-      } catch (e) {
-        console.error("Failed to load saved courses", e);
-      }
-    }
-    return [];
-  });
   const [searchQuery, setSearchQuery] = useState("");
   const [isScanning, setIsScanning] = useState(false);
-  const [courseIdToDelete, setCourseIdToDelete] = useState<string | null>(null);
   const [priorityDraft, setPriorityDraft] = useState(DEFAULT_COURSE_PRIORITY);
-  const [courseIdToEditPriority, setCourseIdToEditPriority] = useState<string | null>(null);
   const [pendingCourseImport, setPendingCourseImport] = useState<PendingCourseImport | null>(null);
-
-  const saveCourses = (newCourses: CourseMetadata[]) => {
-    const normalizedCourses = newCourses.map((course) =>
-      normalizeCourseMetadata(course),
-    );
-    setCourses(normalizedCourses);
-    localStorage.setItem("local-course-player::courses", JSON.stringify(normalizedCourses));
-  };
-
-  const handleRequestRemoveCourse = (courseId: string) => {
-    setCourseIdToDelete(courseId);
-  };
-
-  const handleConfirmRemoveCourse = async () => {
-    if (!courseIdToDelete) return;
-
-    const updated = courses.filter((c) => c.id !== courseIdToDelete);
-    saveCourses(updated);
-    localStorage.removeItem(courseIdToDelete);
-    await db.removeHandle(courseIdToDelete);
-    setCourseIdToDelete(null);
-  };
-
-  const handleCancelRemoveCourse = () => {
-    setCourseIdToDelete(null);
-  };
 
   const closePriorityDialog = () => {
     setPendingCourseImport(null);
-    setCourseIdToEditPriority(null);
     setPriorityDraft(DEFAULT_COURSE_PRIORITY);
   };
 
-  const handleRequestEditPriority = (courseId: string) => {
-    const course = courses.find((entry) => entry.id === courseId);
-    if (!course) return;
-
-    setCourseIdToEditPriority(courseId);
-    setPendingCourseImport(null);
-    setPriorityDraft(course.priority || DEFAULT_COURSE_PRIORITY);
-  };
-
-  const handleConfirmPriority = () => {
+  const handleConfirmPriority = async () => {
     const normalizedPriority = priorityDraft.trim() || DEFAULT_COURSE_PRIORITY;
 
     if (pendingCourseImport) {
+      if (pendingCourseImport.handle) {
+        try {
+          const hasPermission = await verifyReadWritePermission(
+            pendingCourseImport.handle,
+          );
+          if (hasPermission) {
+            await writeHandleTextFile(
+              pendingCourseImport.handle,
+              "priority.txt",
+              normalizedPriority,
+            );
+          }
+        } catch (error) {
+          console.error("Failed to persist course priority file", error);
+        }
+      }
+
       const newCourse: CourseMetadata = {
         id: pendingCourseImport.courseKey,
         title: pendingCourseImport.folderName,
@@ -134,23 +108,11 @@ export default function HomePage({ onCourseSelect, filesCache, onPlayFromCache }
           ? courses.map((course, index) => (index === existingIndex ? newCourse : course))
           : [newCourse, ...courses];
 
-      saveCourses(updatedCourses);
+      onSaveCourses(updatedCourses);
       onCourseSelect(newCourse, pendingCourseImport.videoFiles);
       closePriorityDialog();
       return;
     }
-
-    if (courseIdToEditPriority) {
-      saveCourses(
-        courses.map((course) =>
-          course.id === courseIdToEditPriority
-            ? { ...course, priority: normalizedPriority }
-            : course,
-        ),
-      );
-    }
-
-    closePriorityDialog();
   };
 
   const processAndSelect = async (videoFiles: File[], allFiles: File[], handle?: FileSystemDirectoryHandle) => {
@@ -186,15 +148,33 @@ export default function HomePage({ onCourseSelect, filesCache, onPlayFromCache }
         .catch(() => DEFAULT_COURSE_PRIORITY);
     }
 
+    let courseTitle = folderName;
+    const courseConfigFile = allFiles.find(
+      (file) => file.name.toLowerCase() === "course.json",
+    );
+    if (courseConfigFile) {
+      courseTitle = await courseConfigFile
+        .text()
+        .then((text) => {
+          const parsed = JSON.parse(text) as { title?: string };
+          return parsed.title?.trim() || folderName;
+        })
+        .catch(() => folderName);
+    } else if (handle) {
+      const courseConfigText = await readHandleFileText(handle, "course.json");
+      if (courseConfigText) {
+        courseTitle = JSON.parse(courseConfigText).title?.trim() || folderName;
+      }
+    }
+
     if (handle) {
       await db.saveHandle(courseKey, handle);
     }
 
-    setCourseIdToEditPriority(null);
     setPriorityDraft(priority);
     setPendingCourseImport({
       courseKey,
-      folderName,
+      folderName: courseTitle,
       thumbnail: thumbnailBase64,
       path: videoFiles[0].webkitRelativePath?.split('/')[0] || folderName,
       lessonCount: videoFiles.length,
@@ -283,7 +263,6 @@ export default function HomePage({ onCourseSelect, filesCache, onPlayFromCache }
     c.title.toLowerCase().includes(searchQuery.toLowerCase())
   ).sort((a, b) => b.lastPlayedAt - a.lastPlayedAt);
 
-  const courseToDelete = courses.find((course) => course.id === courseIdToDelete) || null;
   const cachedCourseCount = Object.keys(filesCache).length;
   const recentCourse = courses
     .slice()
@@ -291,40 +270,7 @@ export default function HomePage({ onCourseSelect, filesCache, onPlayFromCache }
 
   return (
     <div className="app-shell h-screen overflow-y-auto px-4 py-6 text-[var(--theme-text)] scrollbar-thin scrollbar-track-transparent md:px-8 lg:px-14">
-      {courseToDelete && (
-        <div className="fixed inset-0 z-[110] flex items-center justify-center bg-[var(--theme-overlay)] px-4 backdrop-blur-md">
-          <div className="editorial-panel w-full max-w-md rounded-[2rem] p-6">
-            <div className="mb-5 flex items-start gap-4">
-              <div className="rounded-xl border border-red-500/30 bg-red-500/10 p-2.5">
-                <AlertTriangle className="h-5 w-5 text-red-400" />
-              </div>
-              <div>
-                <h3 className="text-lg font-black text-white">Delete course?</h3>
-                <p className="mt-1 text-sm theme-text-muted">
-                  This will remove <span className="font-semibold theme-text">{courseToDelete.title}</span> from your list and delete its saved progress.
-                </p>
-              </div>
-            </div>
-
-            <div className="flex gap-3">
-              <button
-                onClick={handleCancelRemoveCourse}
-                className="glass-button flex-1 rounded-2xl px-4 py-2.5 text-sm font-bold"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleConfirmRemoveCourse}
-                className="glass-button-danger flex-1 rounded-2xl px-4 py-2.5 text-sm font-bold"
-              >
-                Delete Course
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {(pendingCourseImport || courseIdToEditPriority) && (
+      {pendingCourseImport && (
         <div className="fixed inset-0 z-[120] flex items-center justify-center bg-[var(--theme-overlay)] px-4 backdrop-blur-md">
           <div className="editorial-panel w-full max-w-lg rounded-[2rem] p-6">
             <div className="space-y-2">
@@ -332,7 +278,7 @@ export default function HomePage({ onCourseSelect, filesCache, onPlayFromCache }
                 Course priority
               </p>
               <h3 className="text-2xl font-black text-white">
-                {pendingCourseImport ? "Set priority before adding" : "Edit course priority"}
+                Set priority before adding
               </h3>
               <p className="text-sm leading-6 theme-text-soft">
                 Choose how this course should be labeled in your library. You can use values like
@@ -383,7 +329,7 @@ export default function HomePage({ onCourseSelect, filesCache, onPlayFromCache }
                 onClick={handleConfirmPriority}
                 className="glass-button-primary flex-1 rounded-2xl px-4 py-3 text-sm font-bold"
               >
-                {pendingCourseImport ? "Save and open" : "Save priority"}
+                Save and open
               </button>
             </div>
           </div>
@@ -445,6 +391,13 @@ export default function HomePage({ onCourseSelect, filesCache, onPlayFromCache }
                       <CheckCircle2 className="h-4 w-4 text-[var(--theme-accent-soft)]" />
                       Progress is stored locally
                     </div>
+                    <button
+                      onClick={onOpenDashboard}
+                      className="glass-button inline-flex items-center gap-2 rounded-full px-4 py-3 text-sm font-semibold text-white/80"
+                    >
+                      <SlidersHorizontal className="h-4 w-4 text-[var(--theme-accent-soft)]" />
+                      Manage library
+                    </button>
                   </div>
                 </div>
 
@@ -559,20 +512,26 @@ export default function HomePage({ onCourseSelect, filesCache, onPlayFromCache }
                 Browse the full course wall
               </h2>
               <p className="mt-2 text-sm text-[var(--theme-text-muted)]">
-                Open a course, adjust its priority, or jump back into your latest lessons.
+                Open a course or jump back into your latest lessons. Use the dashboard for edit and delete actions.
               </p>
             </div>
+            <button
+              type="button"
+              onClick={onOpenDashboard}
+              className="glass-button inline-flex items-center gap-2 rounded-full px-4 py-2.5 text-sm font-bold"
+            >
+              <SlidersHorizontal className="h-4 w-4" />
+              Manage Library
+            </button>
           </div>
 
           {filteredCourses.length > 0 ? (
             <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
               {filteredCourses.map((course) => (
-                <CourseCard 
-                  key={course.id} 
-                  course={course} 
+                <CourseCard
+                  key={course.id}
+                  course={course}
                   onSelect={handleCourseClick}
-                  onRemove={handleRequestRemoveCourse}
-                  onEditPriority={handleRequestEditPriority}
                 />
               ))}
             </div>
