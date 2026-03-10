@@ -37,6 +37,7 @@ type PendingCourseImport = {
 };
 
 const DEFAULT_COURSE_PRIORITY = "Standard";
+const APP_NAME = "CourseUp";
 
 function normalizeCourseMetadata(course: CourseMetadata): CourseMetadata {
   return {
@@ -414,15 +415,15 @@ export default function HomePage({ onCourseSelect, filesCache, onPlayFromCache }
             <div className="space-y-5">
               <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/6 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.24em] text-white/70">
                 <Sparkles className="h-3.5 w-3.5 text-violet-300" />
-                Local library
+                {APP_NAME}
               </div>
 
               <div className="space-y-3">
                 <h1 className="max-w-4xl text-4xl font-black tracking-tight text-white md:text-5xl">
-                  Your local courses, organized like a real streaming library.
+                  {APP_NAME} keeps your course folders tidy, playable, and easy to revisit.
                 </h1>
                 <p className="max-w-2xl text-sm leading-7 text-slate-300 md:text-base">
-                  Browse folders, resume lessons, and keep progress without uploading anything.
+                  A local-first course shelf for people who want quick playback, saved progress, and cleaner organization without uploading anything.
                 </p>
               </div>
 
@@ -459,10 +460,10 @@ export default function HomePage({ onCourseSelect, filesCache, onPlayFromCache }
                   Quick start
                 </p>
                 <h2 className="text-2xl font-black text-white">
-                  Add a course folder
+                  Add a course to {APP_NAME}
                 </h2>
                 <p className="text-sm leading-6 text-slate-300">
-                  Select a folder once and keep coming back to it from your library.
+                  Pick a local folder, set its priority, and keep it ready in your library.
                 </p>
               </div>
 
@@ -475,7 +476,7 @@ export default function HomePage({ onCourseSelect, filesCache, onPlayFromCache }
               </button>
 
               <p className="text-xs leading-6 text-slate-400">
-                Works best with folders that contain lesson videos and an optional `thumbnail.png`.
+                Works best with folders that contain lesson videos plus optional `thumbnail.png` and `priority.txt` files.
               </p>
             </div>
           </div>
@@ -508,7 +509,7 @@ export default function HomePage({ onCourseSelect, filesCache, onPlayFromCache }
             <div>
               <h2 className="text-xl font-black text-white md:text-2xl">Your library</h2>
               <p className="mt-1 text-sm text-slate-400">
-                Pick up where you left off or open a new course folder.
+                Open a course, adjust its priority, or jump back into your latest lessons.
               </p>
             </div>
           </div>
@@ -532,7 +533,7 @@ export default function HomePage({ onCourseSelect, filesCache, onPlayFromCache }
               </div>
               <h2 className="text-2xl font-black text-slate-100">No courses added yet</h2>
               <p className="mx-auto mt-3 max-w-md text-sm leading-7 text-slate-400">
-                Add a local course folder to start building your library and track progress lesson by lesson.
+                Add a local course folder to start building your {APP_NAME} library and track progress lesson by lesson.
               </p>
               <button
                 onClick={handleAddCourse}
