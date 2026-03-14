@@ -218,8 +218,54 @@ button:disabled {
   color: var(--theme-text-faint);
 }
 
+.skeleton-block {
+  position: relative;
+  overflow: hidden;
+  border-radius: 9999px;
+  background: color-mix(in srgb, var(--theme-panel-soft) 72%, transparent);
+}
+
+.skeleton-block::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(242, 247, 244, 0.08) 46%,
+    rgba(242, 247, 244, 0.18) 52%,
+    rgba(242, 247, 244, 0.08) 58%,
+    transparent 100%
+  );
+  animation: skeleton-shimmer 1.3s ease-in-out infinite;
+}
+
+.skeleton-panel {
+  border: 1px solid rgba(255, 248, 240, 0.08);
+  background:
+    radial-gradient(circle at top left, color-mix(in srgb, var(--theme-accent-warm) 10%, transparent), transparent 34%),
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--theme-panel-strong) 88%, transparent),
+      color-mix(in srgb, var(--theme-bg) 94%, transparent)
+    );
+  box-shadow: 0 28px 70px rgba(5, 3, 2, 0.34);
+  backdrop-filter: blur(18px);
+}
+
 .fade-in-up {
   animation: fade-in-up 560ms ease-out both;
+}
+
+@keyframes skeleton-shimmer {
+  from {
+    transform: translateX(-100%);
+  }
+
+  to {
+    transform: translateX(100%);
+  }
 }
 
 @keyframes fade-in-up {
