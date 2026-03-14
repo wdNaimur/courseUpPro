@@ -1,15 +1,20 @@
 import { useRef, useState } from "react";
 import {
   ArrowUpRight,
-  CheckCircle2,
+  BadgeCheck,
+  FileImage,
+  FileJson,
   FolderOpen,
+  FolderSync,
   Plus,
   Search,
   Sparkles,
-  Library,
   Clock3,
   HardDriveDownload,
+  ShieldCheck,
   SlidersHorizontal,
+  Tags,
+  Library,
 } from "lucide-react";
 import type { CourseMetadata } from "../types/course";
 import CourseCard from "../components/home/CourseCard";
@@ -50,6 +55,50 @@ type PendingCourseImport = {
 
 const DEFAULT_COURSE_PRIORITY = "Standard";
 const APP_NAME = "CourseUp";
+const workflowSteps = [
+  {
+    label: "Import",
+    title: "Pick a course folder",
+    description: "Bring in a local folder once and let the app index the lesson videos automatically.",
+    icon: HardDriveDownload,
+  },
+  {
+    label: "Sync",
+    title: "Store metadata beside the course",
+    description: "Title, priority, and thumbnail can live inside the folder so your setup survives browser resets.",
+    icon: FolderSync,
+  },
+  {
+    label: "Resume",
+    title: "Jump back into lessons fast",
+    description: "Open the latest course, restore folder access, and continue from the current progress state.",
+    icon: BadgeCheck,
+  },
+];
+
+const metadataFiles = [
+  {
+    fileName: "course.json",
+    summary: "Stores the display title used in the library.",
+    icon: FileJson,
+  },
+  {
+    fileName: "priority.txt",
+    summary: "Keeps the course label simple and editable.",
+    icon: Tags,
+  },
+  {
+    fileName: "thumbnail.png",
+    summary: "Provides the library card cover image.",
+    icon: FileImage,
+  },
+];
+
+const trustSignals = [
+  "Courses stay on your machine instead of being uploaded.",
+  "Writable folder handles let metadata sync back into the real course folder.",
+  "The dashboard separates management tasks from everyday playback.",
+];
 
 export default function HomePage({
   courses,
@@ -387,10 +436,6 @@ export default function HomePage({
                       <Plus className="h-5 w-5" />
                       Add New Course
                     </button>
-                    <div className="glass-button inline-flex items-center gap-2 rounded-full px-4 py-3 text-sm font-semibold text-white/80">
-                      <CheckCircle2 className="h-4 w-4 text-[var(--theme-accent-soft)]" />
-                      Progress is stored locally
-                    </div>
                     <button
                       onClick={onOpenDashboard}
                       className="glass-button inline-flex items-center gap-2 rounded-full px-4 py-3 text-sm font-semibold text-white/80"
@@ -469,8 +514,7 @@ export default function HomePage({
             </aside>
           </div>
         </header>
-
-        <section className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_300px]">
+        <section className="fade-in-up [animation-delay:260ms]">
           <div className="editorial-panel fade-in-up rounded-[2rem] p-4 md:p-5 [animation-delay:160ms]">
             <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-center">
               <div className="relative">
@@ -492,24 +536,13 @@ export default function HomePage({
               </div>
             </div>
           </div>
-
-          <div className="editorial-panel fade-in-up rounded-[2rem] p-5 [animation-delay:220ms]">
-            <p className="section-label">Collection status</p>
-            <p className="mt-3 text-3xl font-black leading-none tracking-[-0.04em] text-[var(--theme-text)]">
-              {cachedCourseCount}
-            </p>
-            <p className="mt-2 text-sm leading-6 text-[var(--theme-text-soft)]">
-              Courses already cached in memory for immediate replay.
-            </p>
-          </div>
         </section>
-
         <section className="fade-in-up [animation-delay:260ms]">
           <div className="mb-5 flex items-center justify-between gap-4">
             <div className="relative">
-              <p className="section-label">Your library</p>
+              <p className="section-label">Library grid</p>
               <h2 className="mt-2 text-3xl font-black tracking-[-0.03em] text-[var(--theme-text)] md:text-4xl">
-                Browse the full course wall
+                All courses
               </h2>
               <p className="mt-2 text-sm text-[var(--theme-text-muted)]">
                 Open a course or jump back into your latest lessons. Use the dashboard for edit and delete actions.
@@ -552,6 +585,100 @@ export default function HomePage({
               </button>
             </div>
           )}
+        </section>
+
+        <section className="grid gap-5 xl:grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)]">
+          <div className="editorial-panel fade-in-up rounded-[2rem] p-5 md:p-6 [animation-delay:220ms]">
+            <div className="flex items-center justify-between gap-4">
+              <div>
+                <p className="section-label">Workflow</p>
+                <h2 className="mt-2 text-3xl font-black tracking-[-0.03em] text-[var(--theme-text)]">
+                  A cleaner path from folder to playback
+                </h2>
+              </div>
+              <ArrowUpRight className="h-5 w-5 text-[var(--theme-accent-soft)]" />
+            </div>
+
+            <div className="mt-6 grid gap-4 md:grid-cols-3">
+              {workflowSteps.map((step) => {
+                const Icon = step.icon;
+                return (
+                  <div
+                    key={step.title}
+                    className="rounded-[1.5rem] border border-[var(--theme-border)] bg-black/18 p-4"
+                  >
+                    <div className="flex items-center justify-between gap-3">
+                      <span className="section-label">{step.label}</span>
+                      <Icon className="h-4 w-4 text-[var(--theme-accent-soft)]" />
+                    </div>
+                    <h3 className="mt-4 text-lg font-black text-[var(--theme-text)]">
+                      {step.title}
+                    </h3>
+                    <p className="mt-2 text-sm leading-6 text-[var(--theme-text-muted)]">
+                      {step.description}
+                    </p>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          <div className="editorial-panel fade-in-up rounded-[2rem] p-5 md:p-6 [animation-delay:260ms]">
+            <div>
+              <p className="section-label">Folder files</p>
+              <h2 className="mt-2 text-3xl font-black tracking-[-0.03em] text-[var(--theme-text)]">
+                Metadata that can travel with the course
+              </h2>
+              <p className="mt-3 text-sm leading-6 text-[var(--theme-text-muted)]">
+                When writable access exists, CourseUp saves key library details directly into the course folder instead of relying only on browser storage.
+              </p>
+            </div>
+
+            <div className="mt-6 grid gap-3">
+              {metadataFiles.map((item) => {
+                const Icon = item.icon;
+                return (
+                  <div
+                    key={item.fileName}
+                    className="flex items-start gap-3 rounded-[1.4rem] border border-[var(--theme-border)] bg-black/18 p-4"
+                  >
+                    <div className="rounded-xl border border-[var(--theme-border)] bg-white/6 p-2.5">
+                      <Icon className="h-4 w-4 text-[var(--theme-accent-soft)]" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-black text-[var(--theme-text)]">{item.fileName}</p>
+                      <p className="mt-1 text-sm leading-6 text-[var(--theme-text-muted)]">
+                        {item.summary}
+                      </p>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </section>
+
+        <section className="editorial-panel fade-in-up rounded-[2rem] p-5 md:p-6 [animation-delay:300ms]">
+          <div className="grid gap-6 xl:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)] xl:items-center">
+            <div>
+              <p className="section-label">Why local-first</p>
+              <h2 className="mt-2 text-3xl font-black tracking-[-0.03em] text-[var(--theme-text)] md:text-4xl">
+                Built for private course archives, not cloud dependence
+              </h2>
+            </div>
+
+            <div className="grid gap-3">
+              {trustSignals.map((signal) => (
+                <div
+                  key={signal}
+                  className="flex items-start gap-3 rounded-[1.4rem] border border-[var(--theme-border)] bg-black/18 px-4 py-4"
+                >
+                  <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-[var(--theme-accent-soft)]" />
+                  <p className="text-sm leading-6 text-[var(--theme-text-soft)]">{signal}</p>
+                </div>
+              ))}
+            </div>
+          </div>
         </section>
       </div>
     </div>

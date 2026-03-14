@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState, useCallback } from "react";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, PanelLeftClose, PanelLeftOpen } from "lucide-react";
 import type { LessonVideo } from "../types/course";
 import {
   buildCourseKey,
@@ -38,6 +38,7 @@ export default function LocalCoursePlayer({
     {},
   );
   const [playbackSpeed, setPlaybackSpeed] = useState(1);
+  const [isSidebarVisible, setIsSidebarVisible] = useState(true);
   const hasInitialized = useRef(false);
 
   const activeLesson = useMemo(
@@ -276,6 +277,21 @@ export default function LocalCoursePlayer({
           </div>
 
           <div className="flex items-center gap-4">
+            <button
+              onClick={() => setIsSidebarVisible((previousState) => !previousState)}
+              className="glass-button flex items-center gap-2 rounded-2xl px-3 py-2 text-sm font-bold text-[var(--theme-text)]"
+              aria-pressed={isSidebarVisible}
+              aria-label={isSidebarVisible ? "Hide course sidebar" : "Show course sidebar"}
+            >
+              {isSidebarVisible ? (
+                <PanelLeftClose className="h-4 w-4 text-[var(--theme-accent-soft)]" />
+              ) : (
+                <PanelLeftOpen className="h-4 w-4 text-[var(--theme-accent-soft)]" />
+              )}
+              <span className="hidden sm:inline">
+                {isSidebarVisible ? "Hide sidebar" : "Show sidebar"}
+              </span>
+            </button>
             <div className="glass-button flex items-center rounded-2xl px-3 py-1.5">
               <span className="text-[12px] font-bold uppercase text-white/75 mt-0.5">
                 Speed
@@ -313,23 +329,25 @@ export default function LocalCoursePlayer({
       </header>
 
       <main className="flex flex-1 overflow-hidden">
-        <div className="h-full w-[360px] shrink-0 overflow-y-auto border-r border-[var(--theme-border)] bg-[color:color-mix(in_srgb,var(--theme-panel)_56%,transparent)] scrollbar-thin scrollbar-track-transparent">
-          <CourseSidebar
-            courseTitle={courseTitle}
-            courseSubtitle={courseSubtitle}
-            completedCount={completedCount}
-            totalLessons={lessonVideos.length}
-            progressPercent={progressPercent}
-            folderTree={folderTree}
-            activeLessonId={activeLessonId}
-            getAccordionOpen={getAccordionOpen}
-            setAccordionOpen={handleAccordionOpen}
-            getLessonCompletion={getLessonCompletion}
-            onSelectLesson={handleSelectLesson}
-            onToggleComplete={handleToggleComplete}
-            formatLessonMeta={formatLessonMeta}
-          />
-        </div>
+        {isSidebarVisible && (
+          <div className="h-full w-[360px] shrink-0 overflow-y-auto border-r border-[var(--theme-border)] bg-[color:color-mix(in_srgb,var(--theme-panel)_56%,transparent)] scrollbar-thin scrollbar-track-transparent">
+            <CourseSidebar
+              courseTitle={courseTitle}
+              courseSubtitle={courseSubtitle}
+              completedCount={completedCount}
+              totalLessons={lessonVideos.length}
+              progressPercent={progressPercent}
+              folderTree={folderTree}
+              activeLessonId={activeLessonId}
+              getAccordionOpen={getAccordionOpen}
+              setAccordionOpen={handleAccordionOpen}
+              getLessonCompletion={getLessonCompletion}
+              onSelectLesson={handleSelectLesson}
+              onToggleComplete={handleToggleComplete}
+              formatLessonMeta={formatLessonMeta}
+            />
+          </div>
+        )}
 
         <div className="h-full flex-1 overflow-y-auto scrollbar-thin scrollbar-track-transparent">
           <VideoDisplay
