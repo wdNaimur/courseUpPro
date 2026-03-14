@@ -32,6 +32,8 @@ type VideoDisplayProps = {
   isCurrentLessonCompleted: boolean;
   formatLessonMeta: (lesson: LessonVideo) => string;
   nextLessonTitle?: string;
+  playbackSpeed: number;
+  onPlaybackSpeedChange: (speed: number) => void;
 };
 
 export default function VideoDisplay({
@@ -45,6 +47,8 @@ export default function VideoDisplay({
   isCurrentLessonCompleted,
   formatLessonMeta,
   nextLessonTitle,
+  playbackSpeed,
+  onPlaybackSpeedChange,
 }: VideoDisplayProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
@@ -585,19 +589,59 @@ export default function VideoDisplay({
                 />
               </div>
 
-              <button
-                onClick={toggleFullscreen}
-                onMouseEnter={handleControlsMouseEnter}
-                onMouseLeave={handleControlsMouseLeave}
-                className={`flex h-8 w-8 items-center justify-center rounded-full md:h-9 md:w-9 ${controlButtonClassName}`}
-                title={isFullscreen ? "Exit Fullscreen" : "Enter Fullscreen"}
-              >
-                {isFullscreen ? (
-                  <Shrink className="h-4 w-4" />
-                ) : (
-                  <Expand className="h-4 w-4" />
-                )}
-              </button>
+              <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 rounded-full border border-white/20 bg-white/12 px-3 py-1.5 shadow-2xl backdrop-blur-md">
+                  <span className="text-[10px] font-bold uppercase tracking-[0.18em] text-white/60">
+                    Speed
+                  </span>
+                  <select
+                    value={playbackSpeed}
+                    onChange={(event) =>
+                      onPlaybackSpeedChange(parseFloat(event.target.value))
+                    }
+                    onMouseEnter={handleControlsMouseEnter}
+                    onMouseLeave={handleControlsMouseLeave}
+                    className="min-w-[4.2rem] cursor-pointer bg-transparent text-right text-xs font-bold text-white/85 focus:outline-none md:text-sm"
+                    title="Playback speed"
+                  >
+                    <option value="0.5" className="bg-[var(--theme-panel)] text-[var(--theme-text-soft)]">
+                      0.5x
+                    </option>
+                    <option value="0.75" className="bg-[var(--theme-panel)] text-[var(--theme-text-soft)]">
+                      0.75x
+                    </option>
+                    <option value="1" className="bg-[var(--theme-panel)] text-[var(--theme-text-soft)]">
+                      1.0x
+                    </option>
+                    <option value="1.25" className="bg-[var(--theme-panel)] text-[var(--theme-text-soft)]">
+                      1.25x
+                    </option>
+                    <option value="1.5" className="bg-[var(--theme-panel)] text-[var(--theme-text-soft)]">
+                      1.5x
+                    </option>
+                    <option value="1.75" className="bg-[var(--theme-panel)] text-[var(--theme-text-soft)]">
+                      1.75x
+                    </option>
+                    <option value="2" className="bg-[var(--theme-panel)] text-[var(--theme-text-soft)]">
+                      2.0x
+                    </option>
+                  </select>
+                </div>
+
+                <button
+                  onClick={toggleFullscreen}
+                  onMouseEnter={handleControlsMouseEnter}
+                  onMouseLeave={handleControlsMouseLeave}
+                  className={`flex h-8 w-8 items-center justify-center rounded-full md:h-9 md:w-9 ${controlButtonClassName}`}
+                  title={isFullscreen ? "Exit Fullscreen" : "Enter Fullscreen"}
+                >
+                  {isFullscreen ? (
+                    <Shrink className="h-4 w-4" />
+                  ) : (
+                    <Expand className="h-4 w-4" />
+                  )}
+                </button>
+              </div>
             </div>
           </div>
         )}

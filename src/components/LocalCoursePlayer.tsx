@@ -261,6 +261,26 @@ export default function LocalCoursePlayer({
       <header className="z-20 shrink-0 border-b border-[var(--theme-border)] bg-[color:color-mix(in_srgb,var(--theme-bg)_90%,transparent)] backdrop-blur">
         <div className="flex h-16 items-center justify-between px-4 md:px-6">
           <div className="flex items-center gap-4">
+            <button
+              onClick={() => setIsSidebarVisible((previousState) => !previousState)}
+              className="glass-button flex h-10 w-10 items-center justify-center rounded-2xl text-[var(--theme-text)]"
+              aria-pressed={isSidebarVisible}
+              aria-label={isSidebarVisible ? "Hide course sidebar" : "Show course sidebar"}
+              title={isSidebarVisible ? "Hide course sidebar" : "Show course sidebar"}
+            >
+              {isSidebarVisible ? (
+                <PanelLeftClose className="h-4 w-4 text-[var(--theme-accent-soft)]" />
+              ) : (
+                <PanelLeftOpen className="h-4 w-4 text-[var(--theme-accent-soft)]" />
+              )}
+            </button>
+            <div className="h-6 w-px bg-[var(--theme-border)]"></div>
+            <p className="hidden max-w-[300px] text-xs font-bold uppercase tracking-wider text-[var(--theme-text-faint)] md:block">
+              {courseTitle}
+            </p>
+          </div>
+
+          <div className="flex items-center gap-4">
             {onBack && (
               <button
                 onClick={onBack}
@@ -270,60 +290,6 @@ export default function LocalCoursePlayer({
                 Back to Courses
               </button>
             )}
-            <div className="hidden h-6 w-px bg-[var(--theme-border)] md:block"></div>
-            <p className="hidden max-w-[300px] text-xs font-bold uppercase tracking-wider text-[var(--theme-text-faint)] md:block">
-              {courseTitle}
-            </p>
-          </div>
-
-          <div className="flex items-center gap-4">
-            <button
-              onClick={() => setIsSidebarVisible((previousState) => !previousState)}
-              className="glass-button flex items-center gap-2 rounded-2xl px-3 py-2 text-sm font-bold text-[var(--theme-text)]"
-              aria-pressed={isSidebarVisible}
-              aria-label={isSidebarVisible ? "Hide course sidebar" : "Show course sidebar"}
-            >
-              {isSidebarVisible ? (
-                <PanelLeftClose className="h-4 w-4 text-[var(--theme-accent-soft)]" />
-              ) : (
-                <PanelLeftOpen className="h-4 w-4 text-[var(--theme-accent-soft)]" />
-              )}
-              <span className="hidden sm:inline">
-                {isSidebarVisible ? "Hide sidebar" : "Show sidebar"}
-              </span>
-            </button>
-            <div className="glass-button flex items-center rounded-2xl px-3 py-1.5">
-              <span className="text-[12px] font-bold uppercase text-white/75 mt-0.5">
-                Speed
-              </span>
-              <select
-                value={playbackSpeed}
-                onChange={(e) => setPlaybackSpeed(parseFloat(e.target.value))}
-                className="min-w-[3.75rem] bg-transparent text-right text-sm font-bold tracking-tight text-white/75 focus:outline-none cursor-pointer"
-              >
-                <option value="0.5" className="bg-[var(--theme-panel)] text-[var(--theme-text-soft)]">
-                  0.5x
-                </option>
-                <option value="0.75" className="bg-[var(--theme-panel)] text-[var(--theme-text-soft)]">
-                  0.75x
-                </option>
-                <option value="1" className="bg-[var(--theme-panel)] text-[var(--theme-text-soft)]">
-                  1.0x
-                </option>
-                <option value="1.25" className="bg-[var(--theme-panel)] text-[var(--theme-text-soft)]">
-                  1.25x
-                </option>
-                <option value="1.5" className="bg-[var(--theme-panel)] text-[var(--theme-text-soft)]">
-                  1.5x
-                </option>
-                <option value="1.75" className="bg-[var(--theme-panel)] text-[var(--theme-text-soft)]">
-                  1.75x
-                </option>
-                <option value="2" className="bg-[var(--theme-panel)] text-[var(--theme-text-soft)]">
-                  2.0x
-                </option>
-              </select>
-            </div>
           </div>
         </div>
       </header>
@@ -361,6 +327,8 @@ export default function LocalCoursePlayer({
             isCurrentLessonCompleted={isCurrentLessonCompleted}
             formatLessonMeta={formatLessonMeta}
             nextLessonTitle={nextLessonTitle}
+            playbackSpeed={playbackSpeed}
+            onPlaybackSpeedChange={setPlaybackSpeed}
           />
         </div>
       </main>
