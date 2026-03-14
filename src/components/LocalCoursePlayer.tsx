@@ -12,6 +12,16 @@ import {
   normalizeSectionTitle,
   stripSharedWrapperFolder,
 } from "../utils/course-helpers";
+import {
+  countCompletedLessons,
+  getLessonPlaybackTime,
+  isLessonCompleted,
+  readCourseProgress,
+  setLastLessonId,
+  updateLessonCompletion,
+  updateLessonPlayback,
+  type CourseProgressState,
+} from "../utils/course-progress";
 import CourseSidebar from "./player/CourseSidebar";
 import VideoDisplay from "./player/VideoDisplay";
 
@@ -33,13 +43,21 @@ export default function LocalCoursePlayer({
   const [courseSubtitle, setCourseSubtitle] = useState(
     "Choose a folder that contains your lesson videos.",
   );
-  const [progressMap, setProgressMap] = useState<Record<string, boolean>>({});
+  const [courseProgress, setCourseProgress] = useState<CourseProgressState>({
+    lessons: {},
+    lastLessonId: null,
+  });
   const [accordionState, setAccordionState] = useState<Record<string, boolean>>(
     {},
   );
   const [playbackSpeed, setPlaybackSpeed] = useState(1);
   const [isSidebarVisible, setIsSidebarVisible] = useState(true);
   const hasInitialized = useRef(false);
+  const lastSavedPlaybackTimeRef = useRef(0);
+  const courseProgressRef = useRef<CourseProgressState>({
+    lessons: {},
+    lastLessonId: null,
+  });
 
   const activeLesson = useMemo(
     () => lessonVideos.find((lesson) => lesson.id === activeLessonId) ?? null,
@@ -52,9 +70,8 @@ export default function LocalCoursePlayer({
   );
 
   const completedCount = useMemo(
-    () =>
-      lessonVideos.filter((lesson) => Boolean(progressMap[lesson.id])).length,
-    [lessonVideos, progressMap],
+    () => countCompletedLessons(courseProgress),
+    [courseProgress],
   );
 
   const progressPercent = lessonVideos.length
@@ -62,7 +79,7 @@ export default function LocalCoursePlayer({
     : 0;
 
   const isCurrentLessonCompleted = activeLessonId
-    ? Boolean(progressMap[activeLessonId])
+    ? isLessonCompleted(courseProgress, activeLessonId)
     : false;
   const hasNextLesson =
     lessonVideos.findIndex((l) => l.id === activeLessonId) <
@@ -75,13 +92,25 @@ export default function LocalCoursePlayer({
 
   useEffect(() => {
     if (!activeCourseKey) return;
-    localStorage.setItem(activeCourseKey, JSON.stringify(progressMap));
-  }, [activeCourseKey, progressMap]);
+    localStorage.setItem(activeCourseKey, JSON.stringify(courseProgress));
+  }, [activeCourseKey, courseProgress]);
+
+  useEffect(() => {
+    courseProgressRef.current = courseProgress;
+  }, [courseProgress]);
+
+  useEffect(() => {
+    if (!activeLessonId) return;
+    setCourseProgress((previousState) =>
+      setLastLessonId(previousState, activeLessonId),
+    );
+  }, [activeLessonId]);
 
   useEffect(() => {
     if (!activeLesson || !videoRef.current) return;
 
     const nextUrl = URL.createObjectURL(activeLesson.file);
+    lastSavedPlaybackTimeRef.current = 0;
     videoRef.current.src = nextUrl;
     videoRef.current.play().catch(() => {
       return;
@@ -93,7 +122,7 @@ export default function LocalCoursePlayer({
   }, [activeLesson]);
 
   const getLessonCompletion = (lessonId: string) =>
-    Boolean(progressMap[lessonId]);
+    isLessonCompleted(courseProgress, lessonId);
 
   const getAccordionOpen = (folderKey: string, defaultState = false) => {
     if (typeof accordionState[folderKey] === "boolean") {
@@ -134,11 +163,70 @@ export default function LocalCoursePlayer({
   };
 
   const handleToggleComplete = (lessonId: string, checked: boolean) => {
-    setProgressMap((previousState) => ({
-      ...previousState,
-      [lessonId]: checked,
-    }));
+    setCourseProgress((previousState) =>
+      updateLessonCompletion(previousState, lessonId, checked),
+    );
   };
+
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video || !activeLesson) return;
+
+    const persistPlaybackPosition = () => {
+      const playbackTime = Number.isFinite(video.currentTime) ? video.currentTime : 0;
+      const duration = Number.isFinite(video.duration) ? video.duration : 0;
+
+      if (
+        Math.abs(playbackTime - lastSavedPlaybackTimeRef.current) < 5 &&
+        playbackTime > 0 &&
+        playbackTime < duration
+      ) {
+        return;
+      }
+
+      lastSavedPlaybackTimeRef.current = playbackTime;
+      setCourseProgress((previousState) =>
+        updateLessonPlayback(
+          previousState,
+          activeLesson.id,
+          playbackTime,
+          duration,
+        ),
+      );
+    };
+
+    const handleLoadedMetadata = () => {
+      const savedPlaybackTime = getLessonPlaybackTime(
+        courseProgressRef.current,
+        activeLesson.id,
+      );
+      const duration = Number.isFinite(video.duration) ? video.duration : 0;
+      const resumeTime =
+        savedPlaybackTime > 0 &&
+        duration > 0 &&
+        savedPlaybackTime < Math.max(duration - 2, 0)
+          ? savedPlaybackTime
+          : 0;
+
+      if (resumeTime > 0) {
+        video.currentTime = resumeTime;
+        lastSavedPlaybackTimeRef.current = resumeTime;
+      }
+    };
+
+    video.addEventListener("loadedmetadata", handleLoadedMetadata);
+    video.addEventListener("timeupdate", persistPlaybackPosition);
+    video.addEventListener("pause", persistPlaybackPosition);
+    video.addEventListener("ended", persistPlaybackPosition);
+
+    return () => {
+      persistPlaybackPosition();
+      video.removeEventListener("loadedmetadata", handleLoadedMetadata);
+      video.removeEventListener("timeupdate", persistPlaybackPosition);
+      video.removeEventListener("pause", persistPlaybackPosition);
+      video.removeEventListener("ended", persistPlaybackPosition);
+    };
+  }, [activeLesson, videoRef]);
 
   const handleCompleteAndContinue = () => {
     if (!activeLessonId) return;
@@ -226,24 +314,34 @@ export default function LocalCoursePlayer({
     );
 
     try {
-      const savedProgress = JSON.parse(localStorage.getItem(courseKey) || "{}");
-      setProgressMap(savedProgress);
+      const savedProgress = readCourseProgress(localStorage.getItem(courseKey));
+      setCourseProgress(savedProgress);
+
+      const preferredLesson =
+        normalizedLessons.find(
+          (lesson) => savedProgress.lastLessonId === lesson.id,
+        ) ??
+        normalizedLessons.find(
+          (lesson) => !isLessonCompleted(savedProgress, lesson.id),
+        ) ??
+        normalizedLessons[0];
+
+      setAccordionState({});
+
+      if (preferredLesson) {
+        setActiveLessonId(preferredLesson.id);
+        openLessonFolders(preferredLesson);
+      }
     } catch {
-      setProgressMap({});
-    }
-
-    setAccordionState({});
-
-    const firstIncompleteLesson = normalizedLessons.find(
-      (lesson) =>
-        !JSON.parse(localStorage.getItem(courseKey) || "{}")[lesson.id],
-    );
-
-    const firstLessonToOpen = firstIncompleteLesson || normalizedLessons[0];
-
-    if (firstLessonToOpen) {
-      setActiveLessonId(firstLessonToOpen.id);
-      openLessonFolders(firstLessonToOpen);
+      setCourseProgress({
+        lessons: {},
+        lastLessonId: null,
+      });
+      setAccordionState({});
+      if (normalizedLessons[0]) {
+        setActiveLessonId(normalizedLessons[0].id);
+        openLessonFolders(normalizedLessons[0]);
+      }
     }
   }, []);
 

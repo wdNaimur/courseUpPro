@@ -1,5 +1,9 @@
 import { Clock3, Trash2 } from "lucide-react";
 import type { CourseMetadata } from "../../types/course";
+import {
+  countCompletedLessons,
+  readCourseProgress,
+} from "../../utils/course-progress";
 
 type CourseCardProps = {
   course: CourseMetadata;
@@ -14,8 +18,8 @@ export default function CourseCard({
   onRemove,
   onEditPriority,
 }: CourseCardProps) {
-  const progressPercent = JSON.parse(localStorage.getItem(course.id) || "{}");
-  const completedCount = Object.values(progressPercent).filter(Boolean).length;
+  const progressState = readCourseProgress(localStorage.getItem(course.id));
+  const completedCount = countCompletedLessons(progressState);
   const progressRatio = course.lessonCount
     ? Math.round((completedCount / course.lessonCount) * 100)
     : 0;
