@@ -8,9 +8,16 @@ pnpm-debug.log*
 lerna-debug.log*
 
 node_modules
+web/node_modules
+mobile/node_modules
 plan
 dist
 dist-ssr
+build
+coverage
+.expo
+.env
+.env*
 *.local
 
 # Editor directories and files
@@ -18,6 +25,7 @@ dist-ssr
 !.vscode/extensions.json
 .idea
 .DS_Store
+Thumbs.db
 *.suo
 *.ntvs*
 *.njsproj

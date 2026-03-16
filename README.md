@@ -1,73 +1,62 @@
-# React + TypeScript + Vite
+# CourseUp Pro
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+CourseUp Pro is now organized as a small monorepo with separate web and mobile apps in the same repository.
 
-Currently, two official plugins are available:
+## Projects
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+- `web/`: the existing React + Vite local course player for desktop browsers
+- `mobile/`: the new Expo + React Native mobile app for offline course import and playback
+- `specs/001-mobile-app/`: planning and execution artifacts for the mobile-app feature branch
 
-## React Compiler
+## Workspace Commands
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+From the repository root:
 
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
-
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```bash
+npm run dev:web
+npm run build:web
+npm run lint:web
+npm run dev:mobile
+npm run android
+npm run ios
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+## Web App
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+The web app code lives under `web/`. It was moved intact from the original root structure and still builds successfully with:
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```bash
+cmd /c npm --prefix web run build
 ```
+
+## Mobile App
+
+The mobile app code lives under `mobile/` and uses Expo Router, Expo SQLite, Expo Document Picker, Expo File System, and Expo Video.
+
+Current mobile implementation areas:
+
+- local course import from device-selected video files
+- persisted course and lesson metadata in SQLite
+- offline lesson playback route
+- resume/progress persistence scaffolding
+- metadata management route for title, priority, and thumbnails
+- Android EAS build configuration for APK and AAB generation
+
+## Android APK Build
+
+From [mobile](C:\Naimur\Projects\courseUpPro\mobile):
+
+```bash
+npm install
+npm install -g eas-cli
+eas login
+eas build:configure
+npm run build:apk
+```
+
+Detailed Android instructions are in [RUN_MOBILE.md](C:\Naimur\Projects\courseUpPro\mobile\RUN_MOBILE.md).
+
+## Notes
+
+- The sandbox used for this implementation could validate the moved web build, but it could not complete device-level Expo validation without installing mobile dependencies and running on an emulator or physical device.
+- Root-level `src/`, `public/`, and Vite config were moved into `web/` as part of the repository split.
