@@ -54,6 +54,7 @@ export default function LocalCoursePlayer({
   const [isSidebarVisible, setIsSidebarVisible] = useState(true);
   const hasInitialized = useRef(false);
   const lastSavedPlaybackTimeRef = useRef(0);
+  const playbackSpeedRef = useRef(1);
   const courseProgressRef = useRef<CourseProgressState>({
     lessons: {},
     lastLessonId: null,
@@ -95,8 +96,12 @@ export default function LocalCoursePlayer({
     lessonVideos.length - 1;
 
   useEffect(() => {
+    playbackSpeedRef.current = playbackSpeed;
+  }, [playbackSpeed]);
+
+  useEffect(() => {
     applyPlaybackSpeed(videoRef.current);
-  }, [applyPlaybackSpeed, activeLessonId]);
+  }, [applyPlaybackSpeed]);
 
   useEffect(() => {
     if (!activeCourseKey) return;
@@ -126,7 +131,8 @@ export default function LocalCoursePlayer({
 
     video.addEventListener("loadedmetadata", handleLoadedMetadata);
     video.src = nextUrl;
-    applyPlaybackSpeed(video);
+    video.defaultPlaybackRate = playbackSpeedRef.current;
+    video.playbackRate = playbackSpeedRef.current;
     video.play().catch(() => {
       return;
     });
@@ -135,7 +141,7 @@ export default function LocalCoursePlayer({
       video.removeEventListener("loadedmetadata", handleLoadedMetadata);
       URL.revokeObjectURL(nextUrl);
     };
-  }, [activeLesson, applyPlaybackSpeed]);
+  }, [activeLesson]);
 
   const getLessonCompletion = (lessonId: string) =>
     isLessonCompleted(courseProgress, lessonId);
