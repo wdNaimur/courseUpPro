@@ -17,6 +17,7 @@ import {
   getLessonPlaybackTime,
   isLessonCompleted,
   readCourseProgress,
+  setPlaybackSpeed as setProgressPlaybackSpeed,
   setLastLessonId,
   updateLessonCompletion,
   updateLessonPlayback,
@@ -46,6 +47,7 @@ export default function LocalCoursePlayer({
   const [courseProgress, setCourseProgress] = useState<CourseProgressState>({
     lessons: {},
     lastLessonId: null,
+    playbackSpeed: 1,
   });
   const [accordionState, setAccordionState] = useState<Record<string, boolean>>(
     {},
@@ -58,6 +60,7 @@ export default function LocalCoursePlayer({
   const courseProgressRef = useRef<CourseProgressState>({
     lessons: {},
     lastLessonId: null,
+    playbackSpeed: 1,
   });
 
   const applyPlaybackSpeed = useCallback(
@@ -97,6 +100,12 @@ export default function LocalCoursePlayer({
 
   useEffect(() => {
     playbackSpeedRef.current = playbackSpeed;
+  }, [playbackSpeed]);
+
+  useEffect(() => {
+    setCourseProgress((previousState) =>
+      setProgressPlaybackSpeed(previousState, playbackSpeed),
+    );
   }, [playbackSpeed]);
 
   useEffect(() => {
@@ -338,6 +347,7 @@ export default function LocalCoursePlayer({
     try {
       const savedProgress = readCourseProgress(localStorage.getItem(courseKey));
       setCourseProgress(savedProgress);
+      setPlaybackSpeed(savedProgress.playbackSpeed);
 
       const preferredLesson =
         normalizedLessons.find(
@@ -358,7 +368,9 @@ export default function LocalCoursePlayer({
       setCourseProgress({
         lessons: {},
         lastLessonId: null,
+        playbackSpeed: 1,
       });
+      setPlaybackSpeed(1);
       setAccordionState({});
       if (normalizedLessons[0]) {
         setActiveLessonId(normalizedLessons[0].id);

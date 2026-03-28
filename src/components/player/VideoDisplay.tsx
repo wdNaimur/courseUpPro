@@ -229,7 +229,7 @@ export default function VideoDisplay({
     }
   }, [activeLesson, isFullscreen, clearPauseOverlayTimer]);
 
-  const toggleFullscreen = () => {
+  const toggleFullscreen = useCallback(() => {
     if (!containerRef.current) return;
     if (!document.fullscreenElement) {
       containerRef.current.requestFullscreen().catch((err) => {
@@ -238,9 +238,9 @@ export default function VideoDisplay({
     } else {
       document.exitFullscreen();
     }
-  };
+  }, []);
 
-  const togglePlayPause = () => {
+  const togglePlayPause = useCallback(() => {
     const video = videoRef.current;
     if (!video) return;
 
@@ -253,7 +253,7 @@ export default function VideoDisplay({
     }
     video.pause();
     setCenterAction("pause");
-  };
+  }, [videoRef]);
 
   useEffect(() => {
     clearPauseOverlayTimer();
@@ -314,14 +314,14 @@ export default function VideoDisplay({
     setIsMuted(nextVolume === 0);
   };
 
-  const toggleMute = () => {
+  const toggleMute = useCallback(() => {
     const video = videoRef.current;
     if (!video) return;
     video.muted = !video.muted;
     setIsMuted(video.muted);
-  };
+  }, [videoRef]);
 
-  const seekBy = (seconds: number) => {
+  const seekBy = useCallback((seconds: number) => {
     const video = videoRef.current;
     if (!video) return;
     const nextTime = Math.min(
@@ -330,7 +330,7 @@ export default function VideoDisplay({
     );
     video.currentTime = nextTime;
     setCurrentTime(nextTime);
-  };
+  }, [videoRef]);
 
   const getRangeBackground = (
     value: number,
@@ -385,14 +385,31 @@ export default function VideoDisplay({
         togglePlayPause();
         return;
       }
+      if (event.code === "Enter" && showAutoPlay) {
+        event.preventDefault();
+        handlePlayNextNow();
+        return;
+      }
+      if (event.code === "ArrowRight" && event.shiftKey) {
+        if (!hasNextLesson) return;
+        event.preventDefault();
+        onCompleteAndContinue();
+        return;
+      }
+      if (event.code === "ArrowLeft" && event.shiftKey) {
+        if (!hasPreviousLesson) return;
+        event.preventDefault();
+        onPreviousLesson();
+        return;
+      }
       if (event.code === "ArrowRight") {
         event.preventDefault();
-        seekBy(5);
+        seekBy(10);
         return;
       }
       if (event.code === "ArrowLeft") {
         event.preventDefault();
-        seekBy(-5);
+        seekBy(-10);
         return;
       }
       if (event.code === "KeyM") {
@@ -408,7 +425,19 @@ export default function VideoDisplay({
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [activeLesson, isMuted]);
+  }, [
+    activeLesson,
+    handlePlayNextNow,
+    hasNextLesson,
+    hasPreviousLesson,
+    onCompleteAndContinue,
+    onPreviousLesson,
+    seekBy,
+    showAutoPlay,
+    toggleFullscreen,
+    toggleMute,
+    togglePlayPause,
+  ]);
 
   const handleContainerClick = (event: MouseEvent<HTMLDivElement>) => {
     if (isFullscreen) {
