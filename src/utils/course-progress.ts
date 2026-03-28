@@ -8,12 +8,23 @@ export type LessonProgress = {
 export type CourseProgressState = {
   lessons: Record<string, LessonProgress>;
   lastLessonId: string | null;
+  playbackSpeed: number;
 };
 
 const EMPTY_PROGRESS_STATE: CourseProgressState = {
   lessons: {},
   lastLessonId: null,
+  playbackSpeed: 1,
 };
+
+function normalizePlaybackSpeed(value: unknown) {
+  return typeof value === "number" &&
+    Number.isFinite(value) &&
+    value >= 0.5 &&
+    value <= 2
+    ? value
+    : 1;
+}
 
 function createLessonProgress(partial?: Partial<LessonProgress>): LessonProgress {
   return {
@@ -61,6 +72,7 @@ export function readCourseProgress(rawValue: string | null): CourseProgressState
         ),
         lastLessonId:
           typeof parsed.lastLessonId === "string" ? parsed.lastLessonId : null,
+        playbackSpeed: normalizePlaybackSpeed(parsed.playbackSpeed),
       };
     }
 
@@ -73,6 +85,7 @@ export function readCourseProgress(rawValue: string | null): CourseProgressState
           ]),
         ),
         lastLessonId: null,
+        playbackSpeed: 1,
       };
     }
   } catch {
@@ -164,5 +177,20 @@ export function setLastLessonId(
   return {
     ...progressState,
     lastLessonId: lessonId,
+  };
+}
+
+export function setPlaybackSpeed(
+  progressState: CourseProgressState,
+  playbackSpeed: number,
+) {
+  const normalizedPlaybackSpeed = normalizePlaybackSpeed(playbackSpeed);
+  if (progressState.playbackSpeed === normalizedPlaybackSpeed) {
+    return progressState;
+  }
+
+  return {
+    ...progressState,
+    playbackSpeed: normalizedPlaybackSpeed,
   };
 }
