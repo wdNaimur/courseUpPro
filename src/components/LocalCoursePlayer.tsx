@@ -59,6 +59,15 @@ export default function LocalCoursePlayer({
     lastLessonId: null,
   });
 
+  const applyPlaybackSpeed = useCallback(
+    (video: HTMLVideoElement | null) => {
+      if (!video) return;
+      video.defaultPlaybackRate = playbackSpeed;
+      video.playbackRate = playbackSpeed;
+    },
+    [playbackSpeed],
+  );
+
   const activeLesson = useMemo(
     () => lessonVideos.find((lesson) => lesson.id === activeLessonId) ?? null,
     [lessonVideos, activeLessonId],
@@ -86,9 +95,8 @@ export default function LocalCoursePlayer({
     lessonVideos.length - 1;
 
   useEffect(() => {
-    if (!videoRef.current) return;
-    videoRef.current.playbackRate = playbackSpeed;
-  }, [playbackSpeed, activeLessonId]);
+    applyPlaybackSpeed(videoRef.current);
+  }, [applyPlaybackSpeed, activeLessonId]);
 
   useEffect(() => {
     if (!activeCourseKey) return;
@@ -107,19 +115,27 @@ export default function LocalCoursePlayer({
   }, [activeLessonId]);
 
   useEffect(() => {
-    if (!activeLesson || !videoRef.current) return;
+    const video = videoRef.current;
+    if (!activeLesson || !video) return;
 
     const nextUrl = URL.createObjectURL(activeLesson.file);
     lastSavedPlaybackTimeRef.current = 0;
-    videoRef.current.src = nextUrl;
-    videoRef.current.play().catch(() => {
+    const handleLoadedMetadata = () => {
+      applyPlaybackSpeed(video);
+    };
+
+    video.addEventListener("loadedmetadata", handleLoadedMetadata);
+    video.src = nextUrl;
+    applyPlaybackSpeed(video);
+    video.play().catch(() => {
       return;
     });
 
     return () => {
+      video.removeEventListener("loadedmetadata", handleLoadedMetadata);
       URL.revokeObjectURL(nextUrl);
     };
-  }, [activeLesson]);
+  }, [activeLesson, applyPlaybackSpeed]);
 
   const getLessonCompletion = (lessonId: string) =>
     isLessonCompleted(courseProgress, lessonId);
