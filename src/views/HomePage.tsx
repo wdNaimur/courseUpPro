@@ -59,19 +59,22 @@ const workflowSteps = [
   {
     label: "Import",
     title: "Pick a course folder",
-    description: "Bring in a local folder once and let the app index the lesson videos automatically.",
+    description:
+      "Bring in a local folder once and let the app index the lesson videos automatically.",
     icon: HardDriveDownload,
   },
   {
     label: "Sync",
     title: "Store metadata beside the course",
-    description: "Title, priority, and thumbnail can live inside the folder so your setup survives browser resets.",
+    description:
+      "Title, priority, and thumbnail can live inside the folder so your setup survives browser resets.",
     icon: FolderSync,
   },
   {
     label: "Resume",
     title: "Jump back into lessons fast",
-    description: "Open the latest course, restore folder access, and continue from the current progress state.",
+    description:
+      "Open the latest course, restore folder access, and continue from the current progress state.",
     icon: BadgeCheck,
   },
 ];
@@ -112,7 +115,8 @@ export default function HomePage({
   const [searchQuery, setSearchQuery] = useState("");
   const [isScanning, setIsScanning] = useState(false);
   const [priorityDraft, setPriorityDraft] = useState(DEFAULT_COURSE_PRIORITY);
-  const [pendingCourseImport, setPendingCourseImport] = useState<PendingCourseImport | null>(null);
+  const [pendingCourseImport, setPendingCourseImport] =
+    useState<PendingCourseImport | null>(null);
 
   const closePriorityDialog = () => {
     setPendingCourseImport(null);
@@ -151,10 +155,14 @@ export default function HomePage({
         hasHandle: pendingCourseImport.hasHandle,
       };
 
-      const existingIndex = courses.findIndex((course) => course.id === newCourse.id);
+      const existingIndex = courses.findIndex(
+        (course) => course.id === newCourse.id,
+      );
       const updatedCourses =
         existingIndex > -1
-          ? courses.map((course, index) => (index === existingIndex ? newCourse : course))
+          ? courses.map((course, index) =>
+              index === existingIndex ? newCourse : course,
+            )
           : [newCourse, ...courses];
 
       onSaveCourses(updatedCourses);
@@ -164,20 +172,34 @@ export default function HomePage({
     }
   };
 
-  const processAndSelect = async (videoFiles: File[], allFiles: File[], handle?: FileSystemDirectoryHandle) => {
+  const processAndSelect = async (
+    videoFiles: File[],
+    allFiles: File[],
+    handle?: FileSystemDirectoryHandle,
+  ) => {
     const folderName = getCourseFolderName(videoFiles);
-    
+
     const mappedLessons = videoFiles
       .map((file) => ({
         id: getRelativePath(file),
         path: getRelativePath(file),
       }))
-      .sort((a, b) => a.path.localeCompare(b.path, undefined, { numeric: true, sensitivity: 'base' }));
+      .sort((a, b) =>
+        a.path.localeCompare(b.path, undefined, {
+          numeric: true,
+          sensitivity: "base",
+        }),
+      );
 
-    const courseKey = buildCourseKey(folderName, mappedLessons as unknown as Parameters<typeof buildCourseKey>[1]);
+    const courseKey = buildCourseKey(
+      folderName,
+      mappedLessons as unknown as Parameters<typeof buildCourseKey>[1],
+    );
 
     let thumbnailBase64 = "";
-    const thumbnailFile = allFiles.find(f => f.name.toLowerCase() === "thumbnail.png");
+    const thumbnailFile = allFiles.find(
+      (f) => f.name.toLowerCase() === "thumbnail.png",
+    );
     if (thumbnailFile) {
       thumbnailBase64 = await new Promise((resolve) => {
         const reader = new FileReader();
@@ -225,7 +247,7 @@ export default function HomePage({
       courseKey,
       folderName: courseTitle,
       thumbnail: thumbnailBase64,
-      path: videoFiles[0].webkitRelativePath?.split('/')[0] || folderName,
+      path: videoFiles[0].webkitRelativePath?.split("/")[0] || folderName,
       lessonCount: videoFiles.length,
       hasHandle: !!handle,
       videoFiles,
@@ -235,22 +257,22 @@ export default function HomePage({
 
   const handleAddCourse = async () => {
     // Try File System Access API first
-    if ('showDirectoryPicker' in window) {
+    if ("showDirectoryPicker" in window) {
       try {
         // @ts-expect-error File System Access API
         const handle = await window.showDirectoryPicker();
         setIsScanning(true);
         const allFiles = await scanDirectory(handle, handle.name);
         const videoFiles = allFiles.filter(isVideoFile);
-        
+
         if (videoFiles.length === 0) {
           window.alert("No video files found in selected folder.");
           return;
         }
-        
+
         await processAndSelect(videoFiles, allFiles, handle);
       } catch (err) {
-        if (err instanceof Error && err.name !== 'AbortError') {
+        if (err instanceof Error && err.name !== "AbortError") {
           console.error(err);
           fileInputRef.current?.click();
         }
@@ -262,7 +284,9 @@ export default function HomePage({
     }
   };
 
-  const handleLegacyFolderPick = async (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleLegacyFolderPick = async (
+    event: React.ChangeEvent<HTMLInputElement>,
+  ) => {
     const selectedFiles = Array.from(event.target.files || []);
     const videoFiles = selectedFiles.filter(isVideoFile);
 
@@ -299,8 +323,12 @@ export default function HomePage({
     }
 
     // Fallback if handle fails or doesn't exist
-    if (window.confirm(`Open folder for "${metadata.title}" to continue learning?`)) {
-      if ('showDirectoryPicker' in window) {
+    if (
+      window.confirm(
+        `Open folder for "${metadata.title}" to continue learning?`,
+      )
+    ) {
+      if ("showDirectoryPicker" in window) {
         handleAddCourse();
       } else {
         fileInputRef.current?.click();
@@ -308,14 +336,13 @@ export default function HomePage({
     }
   };
 
-  const filteredCourses = courses.filter(c => 
-    c.title.toLowerCase().includes(searchQuery.toLowerCase())
-  ).sort((a, b) => b.lastPlayedAt - a.lastPlayedAt);
+  const filteredCourses = courses
+    .filter((c) => c.title.toLowerCase().includes(searchQuery.toLowerCase()))
+    .sort((a, b) => b.lastPlayedAt - a.lastPlayedAt);
 
   const cachedCourseCount = Object.keys(filesCache).length;
-  const recentCourse = courses
-    .slice()
-    .sort((a, b) => b.lastPlayedAt - a.lastPlayedAt)[0] || null;
+  const recentCourse =
+    courses.slice().sort((a, b) => b.lastPlayedAt - a.lastPlayedAt)[0] || null;
 
   return (
     <div className="app-shell h-screen overflow-y-auto px-4 py-6 text-[var(--theme-text)] scrollbar-thin scrollbar-track-transparent md:px-8 lg:px-14">
@@ -323,15 +350,14 @@ export default function HomePage({
         <div className="fixed inset-0 z-[120] flex items-center justify-center bg-[var(--theme-overlay)] px-4 backdrop-blur-md">
           <div className="editorial-panel w-full max-w-lg rounded-[2rem] p-6">
             <div className="space-y-2">
-              <p className="section-label">
-                Course priority
-              </p>
+              <p className="section-label">Course priority</p>
               <h3 className="text-2xl font-black text-white">
                 Set priority before adding
               </h3>
               <p className="text-sm leading-6 theme-text-soft">
-                Choose how this course should be labeled in your library. You can use values like
-                `High`, `Medium`, `Low`, `Focus`, or anything else that fits your workflow.
+                Choose how this course should be labeled in your library. You
+                can use values like `High`, `Medium`, `Low`, `Focus`, or
+                anything else that fits your workflow.
               </p>
             </div>
 
@@ -347,7 +373,13 @@ export default function HomePage({
                 className="w-full rounded-2xl border border-[var(--theme-border)] bg-black/18 px-4 py-3 text-sm font-semibold text-[var(--theme-text)] placeholder:text-[var(--theme-text-faint)] focus:border-[color:color-mix(in_srgb,var(--theme-accent-soft)_35%,transparent)] focus:outline-none focus:ring-4 focus:ring-[color:color-mix(in_srgb,var(--theme-accent-soft)_10%,transparent)]"
               />
               <div className="flex flex-wrap gap-2">
-                {["High", "Medium", "Low", "Focus", DEFAULT_COURSE_PRIORITY].map((option) => (
+                {[
+                  "High",
+                  "Medium",
+                  "Low",
+                  "Focus",
+                  DEFAULT_COURSE_PRIORITY,
+                ].map((option) => (
                   <button
                     key={option}
                     type="button"
@@ -461,19 +493,23 @@ export default function HomePage({
                   </div>
 
                   <div className="space-y-4">
-                    <p className="section-label">Local-first learning library</p>
+                    <p className="section-label">
+                      Local-first learning library
+                    </p>
                     <h1 className="max-w-4xl text-4xl font-black leading-[0.95] tracking-[-0.04em] text-[var(--theme-text)] md:text-6xl xl:text-[5.3rem]">
                       Organize downloaded courses like a curated collection.
                     </h1>
                     <p className="max-w-2xl text-sm leading-7 text-[var(--theme-text-muted)] md:text-base">
-                      Inspired by editorial portfolio layouts rather than generic dashboards: bold hierarchy, fast scanning, and quick access to the course folders you actually use.
+                      Inspired by editorial portfolio layouts rather than
+                      generic dashboards: bold hierarchy, fast scanning, and
+                      quick access to the course folders you actually use.
                     </p>
                   </div>
 
                   <div className="flex flex-wrap gap-3">
                     <button
                       onClick={handleAddCourse}
-                      className="glass-button-primary flex items-center justify-center gap-2 rounded-full px-6 py-3.5 font-bold text-white hover:-translate-y-1"
+                      className="glass-button-primary elastic-lift flex items-center justify-center gap-2 rounded-full px-6 py-3.5 font-bold text-white"
                     >
                       <Plus className="h-5 w-5" />
                       Add New Course
@@ -492,7 +528,9 @@ export default function HomePage({
                   <div className="rounded-[1.6rem] border border-[var(--theme-border)] bg-black/18 p-4">
                     <p className="section-label">Library size</p>
                     <div className="mt-4 flex items-end justify-between gap-3">
-                      <p className="text-5xl font-black tracking-[-0.05em] text-[var(--theme-text)]">{courses.length}</p>
+                      <p className="text-5xl font-black tracking-[-0.05em] text-[var(--theme-text)]">
+                        {courses.length}
+                      </p>
                       <Library className="h-6 w-6 text-[var(--theme-accent-soft)]" />
                     </div>
                     <p className="mt-3 text-sm leading-6 text-[var(--theme-text-muted)]">
@@ -521,13 +559,15 @@ export default function HomePage({
                     Drop in a folder and open it instantly.
                   </h2>
                   <p className="text-sm leading-6 text-[var(--theme-text-soft)]">
-                    Best results come from folders that include lesson videos and optional metadata files like `thumbnail.png` and `priority.txt`.
+                    Best results come from folders that include lesson videos
+                    and optional metadata files like `thumbnail.png` and
+                    `priority.txt`.
                   </p>
                 </div>
 
                 <button
                   onClick={handleAddCourse}
-                  className="glass-button-primary mt-6 flex w-full items-center justify-center gap-2 rounded-[1.4rem] px-6 py-4 font-bold text-white hover:-translate-y-1"
+                  className="glass-button-primary elastic-lift mt-6 flex w-full items-center justify-center gap-2 rounded-[1.4rem] px-6 py-4 font-bold text-white"
                 >
                   <HardDriveDownload className="h-5 w-5" />
                   Import Course Folder
@@ -538,18 +578,30 @@ export default function HomePage({
                 <div className="flex items-center justify-between gap-3">
                   <div>
                     <p className="section-label">System fit</p>
-                    <p className="mt-2 text-lg font-black text-[var(--theme-text)]">Built for offline playback</p>
+                    <p className="mt-2 text-lg font-black text-[var(--theme-text)]">
+                      Built for offline playback
+                    </p>
                   </div>
                   <ArrowUpRight className="h-5 w-5 text-[var(--theme-accent-soft)]" />
                 </div>
                 <div className="mt-5 grid gap-3">
                   <div className="rounded-[1.4rem] border border-white/8 bg-white/[0.04] px-4 py-3">
-                    <p className="text-xs uppercase tracking-[0.18em] text-white/45">Priority labels</p>
-                    <p className="mt-1 text-sm text-[var(--theme-text-soft)]">Tag courses with focus level before they enter the library.</p>
+                    <p className="text-xs uppercase tracking-[0.18em] text-white/45">
+                      Priority labels
+                    </p>
+                    <p className="mt-1 text-sm text-[var(--theme-text-soft)]">
+                      Tag courses with focus level before they enter the
+                      library.
+                    </p>
                   </div>
                   <div className="rounded-[1.4rem] border border-white/8 bg-white/[0.04] px-4 py-3">
-                    <p className="text-xs uppercase tracking-[0.18em] text-white/45">Reopen flow</p>
-                    <p className="mt-1 text-sm text-[var(--theme-text-soft)]">Saved folder handles restore access when the browser allows it.</p>
+                    <p className="text-xs uppercase tracking-[0.18em] text-white/45">
+                      Reopen flow
+                    </p>
+                    <p className="mt-1 text-sm text-[var(--theme-text-soft)]">
+                      Saved folder handles restore access when the browser
+                      allows it.
+                    </p>
                   </div>
                 </div>
               </div>
@@ -573,8 +625,12 @@ export default function HomePage({
               </div>
 
               <div className="flex items-center gap-2 rounded-[1.3rem] border border-[var(--theme-border)] bg-black/18 px-4 py-3 text-sm text-[var(--theme-text-soft)]">
-                <span className="font-bold text-white">{filteredCourses.length}</span>
-                <span>{filteredCourses.length === 1 ? "course" : "courses"} shown</span>
+                <span className="font-bold text-white">
+                  {filteredCourses.length}
+                </span>
+                <span>
+                  {filteredCourses.length === 1 ? "course" : "courses"} shown
+                </span>
               </div>
             </div>
           </div>
@@ -587,7 +643,8 @@ export default function HomePage({
                 All courses
               </h2>
               <p className="mt-2 text-sm text-[var(--theme-text-muted)]">
-                Open a course or jump back into your latest lessons. Use the dashboard for edit and delete actions.
+                Open a course or jump back into your latest lessons. Use the
+                dashboard for edit and delete actions.
               </p>
             </div>
             <button
@@ -615,9 +672,12 @@ export default function HomePage({
               <div className="mb-6 rounded-full border border-white/10 bg-black/18 p-7">
                 <FolderOpen className="h-14 w-14 text-[var(--theme-text-faint)]" />
               </div>
-              <h2 className="text-2xl font-black text-[var(--theme-text)]">No courses added yet</h2>
+              <h2 className="text-2xl font-black text-[var(--theme-text)]">
+                No courses added yet
+              </h2>
               <p className="mx-auto mt-3 max-w-md text-sm leading-7 text-[var(--theme-text-muted)]">
-                Add a local course folder to start building your {APP_NAME} library and track progress lesson by lesson.
+                Add a local course folder to start building your {APP_NAME}{" "}
+                library and track progress lesson by lesson.
               </p>
               <button
                 onClick={handleAddCourse}
@@ -672,7 +732,9 @@ export default function HomePage({
                 Metadata that can travel with the course
               </h2>
               <p className="mt-3 text-sm leading-6 text-[var(--theme-text-muted)]">
-                When writable access exists, CourseUp saves key library details directly into the course folder instead of relying only on browser storage.
+                When writable access exists, CourseUp saves key library details
+                directly into the course folder instead of relying only on
+                browser storage.
               </p>
             </div>
 
@@ -688,7 +750,9 @@ export default function HomePage({
                       <Icon className="h-4 w-4 text-[var(--theme-accent-soft)]" />
                     </div>
                     <div>
-                      <p className="text-sm font-black text-[var(--theme-text)]">{item.fileName}</p>
+                      <p className="text-sm font-black text-[var(--theme-text)]">
+                        {item.fileName}
+                      </p>
                       <p className="mt-1 text-sm leading-6 text-[var(--theme-text-muted)]">
                         {item.summary}
                       </p>
@@ -716,7 +780,9 @@ export default function HomePage({
                   className="flex items-start gap-3 rounded-[1.4rem] border border-[var(--theme-border)] bg-black/18 px-4 py-4"
                 >
                   <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-[var(--theme-accent-soft)]" />
-                  <p className="text-sm leading-6 text-[var(--theme-text-soft)]">{signal}</p>
+                  <p className="text-sm leading-6 text-[var(--theme-text-soft)]">
+                    {signal}
+                  </p>
                 </div>
               ))}
             </div>

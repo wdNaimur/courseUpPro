@@ -34,17 +34,43 @@ body,
   --theme-shadow: rgba(2, 7, 6, 0.32);
   color: var(--theme-text);
   background:
-    radial-gradient(circle at top left, rgba(118, 184, 168, 0.14), transparent 26%),
-    radial-gradient(circle at 80% 12%, rgba(61, 141, 122, 0.16), transparent 22%),
-    linear-gradient(180deg, var(--theme-bg) 0%, var(--theme-bg-alt) 54%, #0d1211 100%);
+    radial-gradient(
+      circle at top left,
+      rgba(118, 184, 168, 0.14),
+      transparent 26%
+    ),
+    radial-gradient(
+      circle at 80% 12%,
+      rgba(61, 141, 122, 0.16),
+      transparent 22%
+    ),
+    linear-gradient(
+      180deg,
+      var(--theme-bg) 0%,
+      var(--theme-bg-alt) 54%,
+      #0d1211 100%
+    );
   font-family: var(--font-sans);
 }
 
 body {
   background:
-    radial-gradient(circle at top left, rgba(118, 184, 168, 0.14), transparent 26%),
-    radial-gradient(circle at 80% 12%, rgba(61, 141, 122, 0.16), transparent 22%),
-    linear-gradient(180deg, var(--theme-bg) 0%, var(--theme-bg-alt) 54%, #0d1211 100%);
+    radial-gradient(
+      circle at top left,
+      rgba(118, 184, 168, 0.14),
+      transparent 26%
+    ),
+    radial-gradient(
+      circle at 80% 12%,
+      rgba(61, 141, 122, 0.16),
+      transparent 22%
+    ),
+    linear-gradient(
+      180deg,
+      var(--theme-bg) 0%,
+      var(--theme-bg-alt) 54%,
+      #0d1211 100%
+    );
   color: var(--theme-text);
 }
 
@@ -100,18 +126,24 @@ button:disabled {
   background-size: 180px 180px;
 }
 
+.glass-button,
+.glass-button-primary,
+.glass-button-danger {
+  transition:
+    background-color 180ms ease,
+    border-color 180ms ease,
+    color 180ms ease,
+    transform 360ms cubic-bezier(0.34, 1.56, 0.64, 1),
+    box-shadow 220ms ease;
+  will-change: transform;
+}
+
 .glass-button {
   border: 1px solid var(--theme-border);
   background: rgba(255, 248, 240, 0.08);
   color: var(--theme-text);
   box-shadow: 0 18px 50px rgba(7, 5, 4, 0.28);
   backdrop-filter: blur(16px);
-  transition:
-    background-color 180ms ease,
-    border-color 180ms ease,
-    color 180ms ease,
-    transform 180ms ease,
-    box-shadow 180ms ease;
 }
 
 .glass-button:hover {
@@ -154,6 +186,25 @@ button:disabled {
   background: rgba(239, 68, 68, 0.92);
 }
 
+.elastic-lift {
+  transform: translateY(0) scale(1);
+  transition:
+    background-color 180ms ease,
+    border-color 180ms ease,
+    color 180ms ease,
+    transform 480ms cubic-bezier(0.22, 1.4, 0.36, 1),
+    box-shadow 240ms ease;
+  will-change: transform;
+}
+
+.elastic-lift:hover {
+  transform: translateY(-4px) scale(1.01);
+}
+
+.elastic-lift:active {
+  transform: translateY(0) scale(0.97);
+}
+
 .glass-panel {
   border: 1px solid rgba(255, 248, 240, 0.08);
   background:
@@ -170,7 +221,11 @@ button:disabled {
 .editorial-panel {
   border: 1px solid rgba(255, 248, 240, 0.08);
   background:
-    radial-gradient(circle at top left, color-mix(in srgb, var(--theme-accent-warm) 16%, transparent), transparent 34%),
+    radial-gradient(
+      circle at top left,
+      color-mix(in srgb, var(--theme-accent-warm) 16%, transparent),
+      transparent 34%
+    ),
     linear-gradient(
       180deg,
       color-mix(in srgb, var(--theme-panel-strong) 88%, transparent),
@@ -244,7 +299,11 @@ button:disabled {
 .skeleton-panel {
   border: 1px solid rgba(255, 248, 240, 0.08);
   background:
-    radial-gradient(circle at top left, color-mix(in srgb, var(--theme-accent-warm) 10%, transparent), transparent 34%),
+    radial-gradient(
+      circle at top left,
+      color-mix(in srgb, var(--theme-accent-warm) 10%, transparent),
+      transparent 34%
+    ),
     linear-gradient(
       180deg,
       color-mix(in srgb, var(--theme-panel-strong) 88%, transparent),
