@@ -50,6 +50,7 @@ export default function FolderAccordion({
         sensitivity: "base",
       }),
   );
+  const mainSectionDurationLabel = formatDurationCompact(sumFolderDurations(node));
 
   return (
     <div className="flex flex-col gap-2">
@@ -62,6 +63,7 @@ export default function FolderAccordion({
           getLessonCompletion,
         );
         const totalDuration = sumFolderDurations(folderNode);
+        const totalDurationLabel = formatDurationCompact(totalDuration);
 
         return (
           <div
@@ -82,7 +84,9 @@ export default function FolderAccordion({
                   <span>
                     {completedLessons} / {totalLessons} lessons
                   </span>
-                  <span className="shrink-0">{formatDurationCompact(totalDuration)}</span>
+                  {totalDurationLabel ? (
+                    <span className="shrink-0">{totalDurationLabel}</span>
+                  ) : null}
                 </div>
               </div>
 
@@ -155,9 +159,11 @@ export default function FolderAccordion({
                   {node.lessons.filter((l) => getLessonCompletion(l.id)).length} /{" "}
                   {node.lessons.length} lessons
                 </span>
-                <span className="shrink-0 text-[11px] font-medium text-[var(--theme-text-faint)]">
-                  {formatDurationCompact(sumFolderDurations(node))}
-                </span>
+                {mainSectionDurationLabel ? (
+                  <span className="shrink-0 text-[11px] font-medium text-[var(--theme-text-faint)]">
+                    {mainSectionDurationLabel}
+                  </span>
+                ) : null}
                 {node.lessons.every((lesson) => getLessonCompletion(lesson.id)) && (
                   <span className="glass-button-primary flex h-5 w-5 items-center justify-center rounded-full p-0">
                     <Check className="h-3 w-3 translate-x-[0.5px] translate-y-[-0.5px]" />

@@ -35,6 +35,8 @@ export default function CourseSidebar({
   onToggleComplete,
   formatLessonMeta,
 }: CourseSidebarProps) {
+  const totalDurationLabel = formatDurationCompact(totalDuration);
+
   return (
     <aside className="flex min-h-0 flex-col border-[var(--theme-border)] bg-[color:color-mix(in_srgb,var(--theme-panel)_56%,transparent)] lg:border-r">
       <div className="glass-panel m-2 mb-0 flex flex-col gap-4 rounded-3xl p-5">
@@ -50,7 +52,7 @@ export default function CourseSidebar({
         <div className="space-y-2.5">
           <div className="flex items-center justify-between text-[11px] font-bold uppercase tracking-wider text-[var(--theme-text-muted)]">
             <span>{progressPercent}% Complete</span>
-            <span>{formatDurationCompact(totalDuration)}</span>
+            {totalDurationLabel ? <span>{totalDurationLabel}</span> : <span />}
           </div>
           <div className="text-[11px] font-medium text-[var(--theme-text-faint)]">
             {completedCount} / {totalLessons} lessons completed

@@ -25,7 +25,11 @@ import {
   isVideoFile,
 } from "../utils/course-helpers";
 import { db } from "../utils/db";
-import { readVideoDurations } from "../utils/duration";
+import {
+  createLessonDurationMap,
+  readVideoDurations,
+  type LessonDurationMap,
+} from "../utils/duration";
 import {
   readHandleFileText,
   scanDirectory,
@@ -37,9 +41,14 @@ import {
 type HomePageProps = {
   courses: CourseMetadata[];
   onSaveCourses: (courses: CourseMetadata[]) => void;
-  onCourseSelect: (courseMetadata: CourseMetadata, files: File[]) => void;
-  filesCache: Record<string, File[]>;
+  onCourseSelect: (
+    courseMetadata: CourseMetadata,
+    files: File[],
+    lessonDurations?: LessonDurationMap,
+  ) => void;
+  filesCache: Record<string, { files: File[]; lessonDurations?: LessonDurationMap }>;
   onPlayFromCache: (courseId: string) => boolean;
+  onPrimeCourseDurations: (courseId: string, files: File[]) => void;
   onOpenDashboard: () => void;
 };
 
@@ -52,6 +61,7 @@ type PendingCourseImport = {
   totalDuration: number;
   hasHandle: boolean;
   videoFiles: File[];
+  lessonDurations?: LessonDurationMap;
   handle?: FileSystemDirectoryHandle;
 };
 
@@ -111,6 +121,7 @@ export default function HomePage({
   onCourseSelect,
   filesCache,
   onPlayFromCache,
+  onPrimeCourseDurations,
   onOpenDashboard,
 }: HomePageProps) {
   const fileInputRef = useRef<HTMLInputElement | null>(null);
@@ -125,27 +136,10 @@ export default function HomePage({
     setPriorityDraft(DEFAULT_COURSE_PRIORITY);
   };
 
-  const handleConfirmPriority = async () => {
+  const handleConfirmPriority = () => {
     const normalizedPriority = priorityDraft.trim() || DEFAULT_COURSE_PRIORITY;
 
     if (pendingCourseImport) {
-      if (pendingCourseImport.handle) {
-        try {
-          const hasPermission = await verifyReadWritePermission(
-            pendingCourseImport.handle,
-          );
-          if (hasPermission) {
-            await writeHandleTextFile(
-              pendingCourseImport.handle,
-              "priority.txt",
-              normalizedPriority,
-            );
-          }
-        } catch (error) {
-          console.error("Failed to persist course priority file", error);
-        }
-      }
-
       const newCourse: CourseMetadata = {
         id: pendingCourseImport.courseKey,
         title: pendingCourseImport.folderName,
@@ -154,7 +148,10 @@ export default function HomePage({
         path: pendingCourseImport.path,
         lastPlayedAt: Date.now(),
         lessonCount: pendingCourseImport.lessonCount,
-        totalDuration: pendingCourseImport.totalDuration,
+        totalDuration:
+          pendingCourseImport.totalDuration > 0
+            ? pendingCourseImport.totalDuration
+            : undefined,
         hasHandle: pendingCourseImport.hasHandle,
       };
 
@@ -168,9 +165,37 @@ export default function HomePage({
             )
           : [newCourse, ...courses];
 
-      onSaveCourses(updatedCourses);
-      onCourseSelect(newCourse, pendingCourseImport.videoFiles);
       closePriorityDialog();
+      onSaveCourses(updatedCourses);
+      onCourseSelect(
+        newCourse,
+        pendingCourseImport.videoFiles,
+        pendingCourseImport.lessonDurations,
+      );
+      if (!pendingCourseImport.lessonDurations) {
+        onPrimeCourseDurations(
+          pendingCourseImport.courseKey,
+          pendingCourseImport.videoFiles,
+        );
+      }
+
+      if (pendingCourseImport.handle) {
+        void verifyReadWritePermission(pendingCourseImport.handle)
+          .then((hasPermission) => {
+            if (!hasPermission) {
+              return;
+            }
+
+            return writeHandleTextFile(
+              pendingCourseImport.handle!,
+              "priority.txt",
+              normalizedPriority,
+            );
+          })
+          .catch((error) => {
+            console.error("Failed to persist course priority file", error);
+          });
+      }
       return;
     }
   };
@@ -245,9 +270,6 @@ export default function HomePage({
       await db.saveHandle(courseKey, handle);
     }
 
-    const durations = await readVideoDurations(videoFiles);
-    const totalDuration = durations.reduce((sum, duration) => sum + duration, 0);
-
     setPriorityDraft(priority);
     setPendingCourseImport({
       courseKey,
@@ -255,23 +277,43 @@ export default function HomePage({
       thumbnail: thumbnailBase64,
       path: videoFiles[0].webkitRelativePath?.split("/")[0] || folderName,
       lessonCount: videoFiles.length,
-      totalDuration,
+      totalDuration: 0,
       hasHandle: !!handle,
       videoFiles,
       handle,
+    });
+
+    void readVideoDurations(videoFiles).then((durations) => {
+      const totalDuration = durations.reduce((sum, duration) => sum + duration, 0);
+      const lessonDurations = createLessonDurationMap(videoFiles, durations);
+
+      setPendingCourseImport((current) =>
+        current?.courseKey === courseKey
+          ? {
+              ...current,
+              totalDuration,
+              lessonDurations,
+            }
+          : current,
+      );
     });
   };
 
   const ensureCourseDuration = async (
     course: CourseMetadata,
     videoFiles: File[],
+    lessonDurations?: LessonDurationMap,
   ) => {
     if (typeof course.totalDuration === "number" && course.totalDuration > 0) {
       return;
     }
 
-    const durations = await readVideoDurations(videoFiles);
-    const totalDuration = durations.reduce((sum, duration) => sum + duration, 0);
+    const totalDuration = lessonDurations
+      ? Object.values(lessonDurations).reduce((sum, duration) => sum + duration, 0)
+      : (await readVideoDurations(videoFiles)).reduce(
+          (sum, duration) => sum + duration,
+          0,
+        );
 
     onSaveCourses(
       courses.map((entry) =>
@@ -325,7 +367,11 @@ export default function HomePage({
 
   const handleCourseClick = async (metadata: CourseMetadata) => {
     if (filesCache[metadata.id]) {
-      await ensureCourseDuration(metadata, filesCache[metadata.id]);
+      await ensureCourseDuration(
+        metadata,
+        filesCache[metadata.id].files,
+        filesCache[metadata.id].lessonDurations,
+      );
       onPlayFromCache(metadata.id);
       return;
     }
@@ -339,8 +385,8 @@ export default function HomePage({
             setIsScanning(true);
             const allFiles = await scanDirectory(handle, handle.name);
             const videoFiles = allFiles.filter(isVideoFile);
-            await ensureCourseDuration(metadata, videoFiles);
             onCourseSelect(metadata, videoFiles);
+            onPrimeCourseDurations(metadata.id, videoFiles);
             return;
           }
         }

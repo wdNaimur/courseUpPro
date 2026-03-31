@@ -19,6 +19,7 @@ export default function LessonItem({
   onToggleComplete,
 }: LessonItemProps) {
   const canToggleComplete = isCompleted || isActive;
+  const durationLabel = formatDurationClock(lesson.duration);
 
   return (
     <article
@@ -56,7 +57,7 @@ export default function LessonItem({
         </span>
         <div className="flex items-center justify-between gap-3 text-[9px] font-medium opacity-60 text-[var(--theme-text-faint)]">
           <span>Lesson {lesson.displayIndex}</span>
-          <span className="shrink-0">{formatDurationClock(lesson.duration)}</span>
+          {durationLabel ? <span className="shrink-0">{durationLabel}</span> : null}
         </div>
       </div>
 

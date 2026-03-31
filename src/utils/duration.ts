@@ -1,4 +1,14 @@
 import type { FolderNode, LessonVideo } from "../types/course";
+import { getRelativePath } from "./course-helpers";
+
+export type LessonDurationMap = Record<string, number>;
+const DURATION_BATCH_SIZE = 2;
+
+function yieldToMainThread() {
+  return new Promise<void>((resolve) => {
+    window.setTimeout(resolve, 0);
+  });
+}
 
 export async function readVideoDuration(file: File): Promise<number> {
   return new Promise((resolve) => {
@@ -24,10 +34,37 @@ export async function readVideoDuration(file: File): Promise<number> {
 }
 
 export async function readVideoDurations(files: File[]) {
-  return Promise.all(files.map((file) => readVideoDuration(file)));
+  const durations: number[] = [];
+
+  for (let index = 0; index < files.length; index += DURATION_BATCH_SIZE) {
+    const batch = files.slice(index, index + DURATION_BATCH_SIZE);
+    const batchDurations = await Promise.all(
+      batch.map((file) => readVideoDuration(file)),
+    );
+    durations.push(...batchDurations);
+
+    if (index + DURATION_BATCH_SIZE < files.length) {
+      await yieldToMainThread();
+    }
+  }
+
+  return durations;
+}
+
+export function createLessonDurationMap(
+  files: File[],
+  durations: number[],
+): LessonDurationMap {
+  return Object.fromEntries(
+    files.map((file, index) => [getRelativePath(file), durations[index] ?? 0]),
+  );
 }
 
 export function formatDurationCompact(totalSeconds: number) {
+  if (!Number.isFinite(totalSeconds) || totalSeconds <= 0) {
+    return "";
+  }
+
   const safeSeconds = Math.max(0, Math.round(totalSeconds));
   const hours = Math.floor(safeSeconds / 3600);
   const minutes = Math.floor((safeSeconds % 3600) / 60);
@@ -44,6 +81,10 @@ export function formatDurationCompact(totalSeconds: number) {
 }
 
 export function formatDurationClock(totalSeconds: number) {
+  if (!Number.isFinite(totalSeconds) || totalSeconds <= 0) {
+    return "";
+  }
+
   const safeSeconds = Math.max(0, Math.round(totalSeconds));
   const hours = Math.floor(safeSeconds / 3600);
   const minutes = Math.floor((safeSeconds % 3600) / 60);
