@@ -26,10 +26,10 @@ const workflowSteps = [
 
 export default function HomePageWorkflowSection() {
   return (
-    <div className="editorial-panel fade-in-up rounded-[2rem] p-5 md:p-6 [animation-delay:220ms]">
+    <section className="editorial-panel fade-in-up rounded-[2rem] p-5 md:p-6 [animation-delay:220ms]">
       <div className="flex items-center justify-between gap-4">
         <div>
-          <p className="section-label">Workflow</p>
+          <p className="section-label">How it works</p>
           <h2 className="mt-2 text-3xl font-black tracking-[-0.03em] text-[var(--theme-text)]">
             A cleaner path from folder to playback
           </h2>
@@ -55,6 +55,6 @@ export default function HomePageWorkflowSection() {
           );
         })}
       </div>
-    </div>
+    </section>
   );
 }

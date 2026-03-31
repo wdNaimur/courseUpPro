@@ -19,7 +19,7 @@ export default function HomePageCoursesSection({
 }: HomePageCoursesSectionProps) {
   return (
     <section className="fade-in-up [animation-delay:260ms]">
-      <div className="mb-5 flex items-center justify-between gap-4">
+      <div className="mb-5 flex items-center justify-between gap-4 flex-wrap">
         <div className="relative">
           <p className="section-label">Library grid</p>
           <h2 className="mt-2 text-3xl font-black tracking-[-0.03em] text-[var(--theme-text)] md:text-4xl">

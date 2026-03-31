@@ -1,10 +1,8 @@
 import { useMemo, useState } from "react";
 import type { CourseMetadata } from "../types/course";
-import DashboardCoursesTable from "../components/dashboard/DashboardCoursesTable";
-import DashboardDeleteDialog from "../components/dashboard/DashboardDeleteDialog";
-import DashboardEditDialog from "../components/dashboard/DashboardEditDialog";
-import DashboardHeaderSection from "../components/dashboard/DashboardHeaderSection";
-import DashboardToolbarSection from "../components/dashboard/DashboardToolbarSection";
+import DashboardContentSections from "../components/dashboard/DashboardContentSections";
+import DashboardDialogLayer from "../components/dashboard/DashboardDialogLayer";
+import PageShell from "../components/shared/PageShell";
 import { db } from "../utils/db";
 import {
   removeHandleEntryIfExists,
@@ -152,46 +150,37 @@ export default function LibraryDashboard({
   };
 
   return (
-    <div className="app-shell h-screen overflow-y-auto px-4 py-6 text-[var(--theme-text)] scrollbar-thin scrollbar-track-transparent md:px-8 lg:px-14">
-      {courseToDelete && (
-        <DashboardDeleteDialog
-          course={courseToDelete}
-          onCancel={() => setCourseIdToDelete(null)}
-          onConfirm={handleConfirmRemoveCourse}
-        />
-      )}
+    <>
+      <DashboardDialogLayer
+        courseToDelete={courseToDelete}
+        courseToEdit={courseToEdit}
+        defaultCoursePriority={DEFAULT_COURSE_PRIORITY}
+        priorityDraft={priorityDraft}
+        thumbnailDraft={thumbnailDraft}
+        titleDraft={titleDraft}
+        onCancelDelete={() => setCourseIdToDelete(null)}
+        onCancelEdit={handleCloseEditDialog}
+        onConfirmDelete={handleConfirmRemoveCourse}
+        onConfirmEdit={handleConfirmEdit}
+        onPriorityDraftChange={setPriorityDraft}
+        onThumbnailClear={() => setThumbnailDraft("")}
+        onThumbnailSelect={handleThumbnailSelect}
+        onTitleDraftChange={setTitleDraft}
+      />
 
-      {courseToEdit && (
-        <DashboardEditDialog
-          course={courseToEdit}
-          defaultCoursePriority={DEFAULT_COURSE_PRIORITY}
-          titleDraft={titleDraft}
-          priorityDraft={priorityDraft}
-          thumbnailDraft={thumbnailDraft}
-          onTitleDraftChange={setTitleDraft}
-          onPriorityDraftChange={setPriorityDraft}
-          onThumbnailSelect={handleThumbnailSelect}
-          onThumbnailClear={() => setThumbnailDraft("")}
-          onCancel={handleCloseEditDialog}
-          onConfirm={handleConfirmEdit}
-        />
-      )}
-
-      <div className="mx-auto flex w-full max-w-[1520px] flex-col gap-8 pb-10">
-        <DashboardHeaderSection coursesCount={courses.length} onBack={onBack} />
-        <DashboardToolbarSection
-          filteredCount={filteredCourses.length}
-          searchQuery={searchQuery}
-          onSearchQueryChange={setSearchQuery}
-          onAddCourse={onAddCourse}
-        />
-        <DashboardCoursesTable
+      <PageShell>
+        <DashboardContentSections
           courses={filteredCourses}
+          coursesCount={courses.length}
           defaultCoursePriority={DEFAULT_COURSE_PRIORITY}
-          onEdit={handleRequestEditPriority}
-          onDelete={setCourseIdToDelete}
+          onAddCourse={onAddCourse}
+          onBack={onBack}
+          onDeleteCourse={setCourseIdToDelete}
+          onEditCourse={handleRequestEditPriority}
+          onSearchQueryChange={setSearchQuery}
+          searchQuery={searchQuery}
         />
-      </div>
-    </div>
+      </PageShell>
+    </>
   );
 }
