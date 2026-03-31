@@ -680,6 +680,18 @@ export default function VideoDisplay({
                     <option value="2" className="bg-[var(--theme-panel)] text-[var(--theme-text-soft)]">
                       2.0x
                     </option>
+                    <option value="2.25" className="bg-[var(--theme-panel)] text-[var(--theme-text-soft)]">
+                      2.25x
+                    </option>
+                    <option value="2.5" className="bg-[var(--theme-panel)] text-[var(--theme-text-soft)]">
+                      2.5x
+                    </option>
+                    <option value="2.75" className="bg-[var(--theme-panel)] text-[var(--theme-text-soft)]">
+                      2.75x
+                    </option>
+                    <option value="3" className="bg-[var(--theme-panel)] text-[var(--theme-text-soft)]">
+                      3.0x
+                    </option>
                   </select>
                 </div>
 
