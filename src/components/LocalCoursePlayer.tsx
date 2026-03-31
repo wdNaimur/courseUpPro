@@ -13,6 +13,7 @@ import {
   stripSharedWrapperFolder,
 } from "../utils/course-helpers";
 import {
+  getCompletedCourseDuration,
   countCompletedLessons,
   getLessonPlaybackTime,
   isLessonCompleted,
@@ -95,6 +96,19 @@ export default function LocalCoursePlayer({
   const completedCount = useMemo(
     () => countCompletedLessons(courseProgress),
     [courseProgress],
+  );
+  const completedDuration = useMemo(
+    () =>
+      lessonVideos.reduce((total, lesson) => {
+        if (!isLessonCompleted(courseProgress, lesson.id)) {
+          return total;
+        }
+
+        const resolvedDuration =
+          lesson.duration || courseProgress.lessons[lesson.id]?.duration || 0;
+        return total + resolvedDuration;
+      }, 0) || getCompletedCourseDuration(courseProgress),
+    [courseProgress, lessonVideos],
   );
 
   const progressPercent = lessonVideos.length
@@ -536,28 +550,18 @@ export default function LocalCoursePlayer({
 
   return (
     <div className="flex h-screen flex-col overflow-hidden bg-[linear-gradient(180deg,var(--theme-bg)_0%,var(--theme-bg)_50%,var(--theme-bg-alt)_100%)] text-[var(--theme-text)]">
+      {isSidebarVisible && (
+        <div
+          className="fixed inset-0 z-[80] bg-[var(--theme-overlay)]/70 lg:hidden"
+          onClick={(event) => {
+            event.stopPropagation();
+            setIsSidebarVisible(false);
+          }}
+        />
+      )}
+
       <header className="z-20 shrink-0 border-b border-[var(--theme-border)] bg-[color:color-mix(in_srgb,var(--theme-bg)_90%,transparent)] backdrop-blur">
         <div className="flex h-16 items-center justify-between px-4 md:px-6">
-          <div className="flex items-center gap-4">
-            <button
-              onClick={() => setIsSidebarVisible((previousState) => !previousState)}
-              className="glass-button flex h-10 w-10 items-center justify-center rounded-2xl text-[var(--theme-text)]"
-              aria-pressed={isSidebarVisible}
-              aria-label={isSidebarVisible ? "Hide course sidebar" : "Show course sidebar"}
-              title={isSidebarVisible ? "Hide course sidebar" : "Show course sidebar"}
-            >
-              {isSidebarVisible ? (
-                <X className="h-4 w-4 text-[var(--theme-accent-soft)]" />
-              ) : (
-                <Menu className="h-4 w-4 text-[var(--theme-accent-soft)]" />
-              )}
-            </button>
-            <div className="h-6 w-px bg-[var(--theme-border)]"></div>
-            <p className="hidden max-w-[300px] text-xs font-bold uppercase tracking-wider text-[var(--theme-text-faint)] md:block">
-              {courseTitle}
-            </p>
-          </div>
-
           <div className="flex items-center gap-4">
             {onBack && (
               <button
@@ -568,26 +572,37 @@ export default function LocalCoursePlayer({
                 Back to Courses
               </button>
             )}
+            <div className="h-6 w-px bg-[var(--theme-border)]"></div>
+            <p className="hidden max-w-[300px] text-xs font-bold uppercase tracking-wider text-[var(--theme-text-faint)] md:block">
+              {courseTitle}
+            </p>
           </div>
+
+          <button
+            onClick={() => setIsSidebarVisible((previousState) => !previousState)}
+            className="glass-button flex h-10 w-10 items-center justify-center rounded-2xl text-[var(--theme-text)]"
+            aria-pressed={isSidebarVisible}
+            aria-label={isSidebarVisible ? "Hide course sidebar" : "Show course sidebar"}
+            title={isSidebarVisible ? "Hide course sidebar" : "Show course sidebar"}
+          >
+            {isSidebarVisible ? (
+              <X className="h-4 w-4 text-[var(--theme-accent-soft)]" />
+            ) : (
+              <Menu className="h-4 w-4 text-[var(--theme-accent-soft)]" />
+            )}
+          </button>
         </div>
       </header>
 
       <main className="relative flex flex-1 overflow-hidden lg:flex-row">
         <div
           className={[
-            "pointer-events-none absolute inset-0 z-[80] bg-[var(--theme-overlay)]/70 opacity-0 transition-opacity duration-300 lg:hidden",
-            isSidebarVisible ? "pointer-events-auto opacity-100" : "",
-          ].join(" ")}
-          onClick={() => setIsSidebarVisible(false)}
-        />
-
-        <div
-          className={[
-            "fixed inset-x-0 bottom-0 z-[90] max-h-[72vh] overflow-y-auto rounded-t-[1.8rem] border border-b-0 border-[var(--theme-border)] bg-[color:color-mix(in_srgb,var(--theme-panel)_92%,transparent)] shadow-[0_-24px_80px_rgba(0,0,0,0.38)] transition-transform duration-300 scrollbar-thin scrollbar-track-transparent lg:static lg:z-auto lg:max-h-none lg:rounded-none lg:border-0 lg:bg-[color:color-mix(in_srgb,var(--theme-panel)_56%,transparent)] lg:shadow-none lg:transition-[width,opacity] lg:duration-300",
+            "fixed inset-x-0 bottom-0 z-[90] max-h-[72vh] overflow-y-auto rounded-t-[1.8rem] border border-b-0 border-[var(--theme-border)] bg-[color:color-mix(in_srgb,var(--theme-panel)_92%,transparent)] shadow-[0_-24px_80px_rgba(0,0,0,0.38)] transition-transform duration-300 scrollbar-thin scrollbar-track-transparent lg:order-2 lg:static lg:z-auto lg:max-h-none lg:rounded-none lg:border-0 lg:border-l lg:bg-[color:color-mix(in_srgb,var(--theme-panel)_56%,transparent)] lg:shadow-none lg:transition-[width,opacity] lg:duration-300",
             isSidebarVisible
               ? "translate-y-0 lg:w-[360px] lg:opacity-100"
               : "translate-y-full lg:w-0 lg:opacity-0 lg:overflow-hidden lg:pointer-events-none",
           ].join(" ")}
+          onClick={(event) => event.stopPropagation()}
         >
           <div className="mx-auto mt-3 h-1.5 w-16 rounded-full bg-white/15 lg:hidden" />
           <div className="lg:h-full lg:w-[360px]">
@@ -595,6 +610,7 @@ export default function LocalCoursePlayer({
               courseTitle={courseTitle}
               courseSubtitle={courseSubtitle}
               completedCount={completedCount}
+              completedDuration={completedDuration}
               totalLessons={lessonVideos.length}
               progressPercent={progressPercent}
               totalDuration={totalDuration}
@@ -610,7 +626,12 @@ export default function LocalCoursePlayer({
           </div>
         </div>
 
-        <div className="min-h-0 flex-1 overflow-y-auto scrollbar-thin scrollbar-track-transparent">
+        <div
+          className={[
+            "min-h-0 flex-1 overflow-y-auto scrollbar-thin scrollbar-track-transparent lg:order-1",
+            isSidebarVisible ? "pointer-events-none lg:pointer-events-auto" : "",
+          ].join(" ")}
+        >
           <VideoDisplay
             activeLesson={activeLesson}
             courseTitle={courseTitle}

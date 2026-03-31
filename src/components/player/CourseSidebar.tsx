@@ -6,6 +6,7 @@ type CourseSidebarProps = {
   courseTitle: string;
   courseSubtitle: string;
   completedCount: number;
+  completedDuration: number;
   totalLessons: number;
   progressPercent: number;
   totalDuration: number;
@@ -23,6 +24,7 @@ export default function CourseSidebar({
   courseTitle,
   courseSubtitle,
   completedCount,
+  completedDuration,
   totalLessons,
   progressPercent,
   totalDuration,
@@ -36,6 +38,7 @@ export default function CourseSidebar({
   formatLessonMeta,
 }: CourseSidebarProps) {
   const totalDurationLabel = formatDurationCompact(totalDuration);
+  const completedDurationLabel = formatDurationCompact(completedDuration);
 
   return (
     <aside className="flex min-h-0 flex-col border-[var(--theme-border)] bg-[color:color-mix(in_srgb,var(--theme-panel)_56%,transparent)] lg:border-r">
@@ -56,6 +59,7 @@ export default function CourseSidebar({
           </div>
           <div className="text-[11px] font-medium text-[var(--theme-text-faint)]">
             {completedCount} / {totalLessons} lessons completed
+            {completedDurationLabel ? ` · ${completedDurationLabel} completed` : ""}
           </div>
           <div className="h-1.5 overflow-hidden rounded-full bg-[var(--theme-bg)]">
             <div
