@@ -25,6 +25,7 @@ import {
   isVideoFile,
 } from "../utils/course-helpers";
 import { db } from "../utils/db";
+import { readVideoDurations } from "../utils/duration";
 import {
   readHandleFileText,
   scanDirectory,
@@ -48,6 +49,7 @@ type PendingCourseImport = {
   thumbnail: string;
   path: string;
   lessonCount: number;
+  totalDuration: number;
   hasHandle: boolean;
   videoFiles: File[];
   handle?: FileSystemDirectoryHandle;
@@ -152,6 +154,7 @@ export default function HomePage({
         path: pendingCourseImport.path,
         lastPlayedAt: Date.now(),
         lessonCount: pendingCourseImport.lessonCount,
+        totalDuration: pendingCourseImport.totalDuration,
         hasHandle: pendingCourseImport.hasHandle,
       };
 
@@ -242,6 +245,9 @@ export default function HomePage({
       await db.saveHandle(courseKey, handle);
     }
 
+    const durations = await readVideoDurations(videoFiles);
+    const totalDuration = durations.reduce((sum, duration) => sum + duration, 0);
+
     setPriorityDraft(priority);
     setPendingCourseImport({
       courseKey,
@@ -249,10 +255,29 @@ export default function HomePage({
       thumbnail: thumbnailBase64,
       path: videoFiles[0].webkitRelativePath?.split("/")[0] || folderName,
       lessonCount: videoFiles.length,
+      totalDuration,
       hasHandle: !!handle,
       videoFiles,
       handle,
     });
+  };
+
+  const ensureCourseDuration = async (
+    course: CourseMetadata,
+    videoFiles: File[],
+  ) => {
+    if (typeof course.totalDuration === "number" && course.totalDuration > 0) {
+      return;
+    }
+
+    const durations = await readVideoDurations(videoFiles);
+    const totalDuration = durations.reduce((sum, duration) => sum + duration, 0);
+
+    onSaveCourses(
+      courses.map((entry) =>
+        entry.id === course.id ? { ...entry, totalDuration } : entry,
+      ),
+    );
   };
 
   const handleAddCourse = async () => {
@@ -300,6 +325,7 @@ export default function HomePage({
 
   const handleCourseClick = async (metadata: CourseMetadata) => {
     if (filesCache[metadata.id]) {
+      await ensureCourseDuration(metadata, filesCache[metadata.id]);
       onPlayFromCache(metadata.id);
       return;
     }
@@ -313,6 +339,7 @@ export default function HomePage({
             setIsScanning(true);
             const allFiles = await scanDirectory(handle, handle.name);
             const videoFiles = allFiles.filter(isVideoFile);
+            await ensureCourseDuration(metadata, videoFiles);
             onCourseSelect(metadata, videoFiles);
             return;
           }

@@ -15,6 +15,10 @@ function normalizeCourseMetadata(course: CourseMetadata): CourseMetadata {
   return {
     ...course,
     priority: course.priority?.trim() || DEFAULT_COURSE_PRIORITY,
+    totalDuration:
+      typeof course.totalDuration === "number" && Number.isFinite(course.totalDuration)
+        ? Math.max(course.totalDuration, 0)
+        : undefined,
   };
 }
 

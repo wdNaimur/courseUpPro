@@ -1,4 +1,5 @@
 import type { FolderNode, LessonVideo } from "../../types/course";
+import { formatDurationCompact } from "../../utils/duration";
 import FolderAccordion from "./FolderAccordion";
 
 type CourseSidebarProps = {
@@ -7,6 +8,7 @@ type CourseSidebarProps = {
   completedCount: number;
   totalLessons: number;
   progressPercent: number;
+  totalDuration: number;
   folderTree: FolderNode;
   activeLessonId: string | null;
   getAccordionOpen: (folderKey: string, defaultState?: boolean) => boolean;
@@ -23,6 +25,7 @@ export default function CourseSidebar({
   completedCount,
   totalLessons,
   progressPercent,
+  totalDuration,
   folderTree,
   activeLessonId,
   getAccordionOpen,
@@ -47,9 +50,10 @@ export default function CourseSidebar({
         <div className="space-y-2.5">
           <div className="flex items-center justify-between text-[11px] font-bold uppercase tracking-wider text-[var(--theme-text-muted)]">
             <span>{progressPercent}% Complete</span>
-            <span>
-              {completedCount} / {totalLessons}
-            </span>
+            <span>{formatDurationCompact(totalDuration)}</span>
+          </div>
+          <div className="text-[11px] font-medium text-[var(--theme-text-faint)]">
+            {completedCount} / {totalLessons} lessons completed
           </div>
           <div className="h-1.5 overflow-hidden rounded-full bg-[var(--theme-bg)]">
             <div
