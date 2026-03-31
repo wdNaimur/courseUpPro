@@ -108,6 +108,14 @@ export function getTrackedCourseDuration(progressState: CourseProgressState) {
   );
 }
 
+export function getCompletedCourseDuration(progressState: CourseProgressState) {
+  return Object.values(progressState.lessons).reduce(
+    (total, lessonProgress) =>
+      lessonProgress.completed ? total + lessonProgress.duration : total,
+    0,
+  );
+}
+
 export function isLessonCompleted(
   progressState: CourseProgressState,
   lessonId: string,
