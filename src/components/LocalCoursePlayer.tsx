@@ -583,12 +583,14 @@ export default function LocalCoursePlayer({
 
         <div
           className={[
-            "fixed inset-x-0 bottom-0 z-[90] max-h-[72vh] overflow-y-auto rounded-t-[1.8rem] border border-b-0 border-[var(--theme-border)] bg-[color:color-mix(in_srgb,var(--theme-panel)_92%,transparent)] shadow-[0_-24px_80px_rgba(0,0,0,0.38)] transition-transform duration-300 scrollbar-thin scrollbar-track-transparent lg:static lg:z-auto lg:max-h-none lg:w-[360px] lg:translate-y-0 lg:overflow-y-auto lg:rounded-none lg:border-0 lg:border-r lg:bg-[color:color-mix(in_srgb,var(--theme-panel)_56%,transparent)] lg:shadow-none",
-            isSidebarVisible ? "translate-y-0" : "translate-y-full",
+            "fixed inset-x-0 bottom-0 z-[90] max-h-[72vh] overflow-y-auto rounded-t-[1.8rem] border border-b-0 border-[var(--theme-border)] bg-[color:color-mix(in_srgb,var(--theme-panel)_92%,transparent)] shadow-[0_-24px_80px_rgba(0,0,0,0.38)] transition-transform duration-300 scrollbar-thin scrollbar-track-transparent lg:static lg:z-auto lg:max-h-none lg:rounded-none lg:border-0 lg:bg-[color:color-mix(in_srgb,var(--theme-panel)_56%,transparent)] lg:shadow-none lg:transition-[width,opacity] lg:duration-300",
+            isSidebarVisible
+              ? "translate-y-0 lg:w-[360px] lg:opacity-100"
+              : "translate-y-full lg:w-0 lg:opacity-0 lg:overflow-hidden lg:pointer-events-none",
           ].join(" ")}
         >
           <div className="mx-auto mt-3 h-1.5 w-16 rounded-full bg-white/15 lg:hidden" />
-          <div className="lg:h-full">
+          <div className="lg:h-full lg:w-[360px]">
             <CourseSidebar
               courseTitle={courseTitle}
               courseSubtitle={courseSubtitle}
