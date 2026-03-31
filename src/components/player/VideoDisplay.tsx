@@ -60,6 +60,10 @@ export default function VideoDisplay({
   const [currentTime, setCurrentTime] = useState(0);
   const [volume, setVolume] = useState(1);
   const [isMuted, setIsMuted] = useState(false);
+  const [isFinePointer, setIsFinePointer] = useState(() => {
+    if (typeof window === "undefined") return true;
+    return window.matchMedia("(pointer: fine)").matches;
+  });
   const [isInteractingWithControls, setIsInteractingWithControls] =
     useState(false);
   const [showPauseOverlay, setShowPauseOverlay] = useState(false);
@@ -92,6 +96,22 @@ export default function VideoDisplay({
 
   const cancelAutoPlay = useCallback(() => {
     setShowAutoPlay(false);
+  }, []);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const mediaQuery = window.matchMedia("(pointer: fine)");
+    const handlePointerChange = (event: MediaQueryListEvent) => {
+      setIsFinePointer(event.matches);
+    };
+
+    setIsFinePointer(mediaQuery.matches);
+    mediaQuery.addEventListener("change", handlePointerChange);
+
+    return () => {
+      mediaQuery.removeEventListener("change", handlePointerChange);
+    };
   }, []);
 
   useEffect(() => {
@@ -444,6 +464,10 @@ export default function VideoDisplay({
       handleMouseMove();
     }
 
+    if (!isFinePointer) {
+      return;
+    }
+
     const target = event.target as HTMLElement;
     const isVideoSurface = target.tagName.toLowerCase() === "video";
     if (isVideoSurface) {
@@ -762,6 +786,10 @@ export default function VideoDisplay({
                 e.stopPropagation();
                 onPreviousLesson();
               }}
+              onDoubleClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+              }}
               onMouseEnter={handleControlsMouseEnter}
               onMouseLeave={handleControlsMouseLeave}
               disabled={!hasPreviousLesson}
@@ -779,6 +807,10 @@ export default function VideoDisplay({
                 e.preventDefault();
                 e.stopPropagation();
                 onCompleteAndContinue();
+              }}
+              onDoubleClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
               }}
               onMouseEnter={handleControlsMouseEnter}
               onMouseLeave={handleControlsMouseLeave}
