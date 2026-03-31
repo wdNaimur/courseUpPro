@@ -73,14 +73,11 @@ export default function LocalCoursePlayer({
     playbackSpeed: 1,
   });
 
-  const applyPlaybackSpeed = useCallback(
-    (video: HTMLVideoElement | null) => {
-      if (!video) return;
-      video.defaultPlaybackRate = playbackSpeed;
-      video.playbackRate = playbackSpeed;
-    },
-    [playbackSpeed],
-  );
+  const applyPlaybackSpeed = useCallback((video: HTMLVideoElement | null) => {
+    if (!video) return;
+    video.defaultPlaybackRate = playbackSpeedRef.current;
+    video.playbackRate = playbackSpeedRef.current;
+  }, []);
 
   const activeLesson = useMemo(
     () => lessonVideos.find((lesson) => lesson.id === activeLessonId) ?? null,
@@ -138,7 +135,7 @@ export default function LocalCoursePlayer({
 
   useEffect(() => {
     applyPlaybackSpeed(videoRef.current);
-  }, [applyPlaybackSpeed]);
+  }, [applyPlaybackSpeed, playbackSpeed]);
 
   useEffect(() => {
     if (!activeCourseKey) return;
