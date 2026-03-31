@@ -1,6 +1,10 @@
 import { useMemo, useState } from "react";
-import { AlertTriangle, ArrowLeft, ImagePlus, PencilLine, Search, Trash2 } from "lucide-react";
 import type { CourseMetadata } from "../types/course";
+import DashboardCoursesTable from "../components/dashboard/DashboardCoursesTable";
+import DashboardDeleteDialog from "../components/dashboard/DashboardDeleteDialog";
+import DashboardEditDialog from "../components/dashboard/DashboardEditDialog";
+import DashboardHeaderSection from "../components/dashboard/DashboardHeaderSection";
+import DashboardToolbarSection from "../components/dashboard/DashboardToolbarSection";
 import { db } from "../utils/db";
 import {
   removeHandleEntryIfExists,
@@ -12,6 +16,7 @@ import {
 type LibraryDashboardProps = {
   courses: CourseMetadata[];
   onBack: () => void;
+  onAddCourse: () => void;
   onSaveCourses: (courses: CourseMetadata[]) => void;
 };
 
@@ -20,6 +25,7 @@ const DEFAULT_COURSE_PRIORITY = "Standard";
 export default function LibraryDashboard({
   courses,
   onBack,
+  onAddCourse,
   onSaveCourses,
 }: LibraryDashboardProps) {
   const [searchQuery, setSearchQuery] = useState("");
@@ -41,7 +47,8 @@ export default function LibraryDashboard({
 
   const courseToDelete =
     courses.find((course) => course.id === courseIdToDelete) ?? null;
-  const courseToEdit = courses.find((course) => course.id === courseIdToEdit) ?? null;
+  const courseToEdit =
+    courses.find((course) => course.id === courseIdToEdit) ?? null;
 
   const handleRequestEditPriority = (courseId: string) => {
     const course = courses.find((entry) => entry.id === courseId);
@@ -147,300 +154,43 @@ export default function LibraryDashboard({
   return (
     <div className="app-shell h-screen overflow-y-auto px-4 py-6 text-[var(--theme-text)] scrollbar-thin scrollbar-track-transparent md:px-8 lg:px-14">
       {courseToDelete && (
-        <div className="fixed inset-0 z-[110] flex items-center justify-center bg-[var(--theme-overlay)] px-4 backdrop-blur-md">
-          <div className="editorial-panel w-full max-w-md rounded-[2rem] p-6">
-            <div className="mb-5 flex items-start gap-4">
-              <div className="rounded-xl border border-red-500/30 bg-red-500/10 p-2.5">
-                <AlertTriangle className="h-5 w-5 text-red-400" />
-              </div>
-              <div>
-                <h3 className="text-lg font-black text-white">Delete course?</h3>
-                <p className="mt-1 text-sm theme-text-muted">
-                  This will remove <span className="font-semibold theme-text">{courseToDelete.title}</span> from your library and delete its saved progress.
-                </p>
-              </div>
-            </div>
-
-            <div className="flex gap-3">
-              <button
-                onClick={() => setCourseIdToDelete(null)}
-                className="glass-button flex-1 rounded-2xl px-4 py-2.5 text-sm font-bold"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleConfirmRemoveCourse}
-                className="glass-button-danger flex-1 rounded-2xl px-4 py-2.5 text-sm font-bold"
-              >
-                Delete Course
-              </button>
-            </div>
-          </div>
-        </div>
+        <DashboardDeleteDialog
+          course={courseToDelete}
+          onCancel={() => setCourseIdToDelete(null)}
+          onConfirm={handleConfirmRemoveCourse}
+        />
       )}
 
       {courseToEdit && (
-        <div className="fixed inset-0 z-[120] flex items-center justify-center bg-[var(--theme-overlay)] px-4 backdrop-blur-md">
-          <div className="editorial-panel w-full max-w-2xl rounded-[2rem] p-6">
-            <div className="space-y-2">
-              <p className="section-label">Course settings</p>
-              <h3 className="text-2xl font-black text-white">Edit course details</h3>
-              <p className="text-sm leading-6 theme-text-soft">
-                Update the visual identity and label for <span className="font-semibold text-white">{courseToEdit.title}</span>.
-              </p>
-            </div>
-
-            <div className="mt-6 grid gap-6 lg:grid-cols-[220px_minmax(0,1fr)]">
-              <div className="space-y-3">
-                <label className="theme-label-soft text-[11px] font-bold uppercase tracking-[0.22em]">
-                  Thumbnail
-                </label>
-                <div className="theme-soft-panel overflow-hidden rounded-[1.5rem]">
-                  {thumbnailDraft ? (
-                    <img
-                      src={thumbnailDraft}
-                      alt={`${courseToEdit.title} thumbnail`}
-                      className="aspect-[4/3] w-full object-cover"
-                    />
-                  ) : (
-                    <div className="theme-preview-art aspect-[4/3] w-full" />
-                  )}
-                </div>
-                <div className="flex flex-wrap gap-2">
-                  <label className="glass-button inline-flex cursor-pointer items-center gap-2 rounded-full px-4 py-2 text-sm font-bold">
-                    <ImagePlus className="h-4 w-4" />
-                    Upload thumbnail
-                    <input
-                      type="file"
-                      accept="image/*"
-                      className="hidden"
-                      onChange={handleThumbnailSelect}
-                    />
-                  </label>
-                  {thumbnailDraft ? (
-                    <button
-                      type="button"
-                      onClick={() => setThumbnailDraft("")}
-                      className="glass-button rounded-full px-4 py-2 text-sm font-bold"
-                    >
-                      Remove image
-                    </button>
-                  ) : null}
-                </div>
-              </div>
-
-              <div className="space-y-3">
-                <label className="theme-label-soft text-[11px] font-bold uppercase tracking-[0.22em]">
-                  Course title
-                </label>
-                <input
-                  type="text"
-                  value={titleDraft}
-                  onChange={(event) => setTitleDraft(event.target.value)}
-                  placeholder="Course title"
-                  className="theme-field w-full rounded-2xl px-4 py-3 text-sm font-semibold"
-                />
-
-                <label className="theme-label-soft text-[11px] font-bold uppercase tracking-[0.22em]">
-                  Priority label
-                </label>
-                <input
-                  type="text"
-                  value={priorityDraft}
-                  onChange={(event) => setPriorityDraft(event.target.value)}
-                  placeholder={DEFAULT_COURSE_PRIORITY}
-                  className="theme-field w-full rounded-2xl px-4 py-3 text-sm font-semibold"
-                />
-                <div className="flex flex-wrap gap-2">
-                  {["High", "Medium", "Low", "Focus", DEFAULT_COURSE_PRIORITY].map((option) => (
-                    <button
-                      key={option}
-                      type="button"
-                      onClick={() => setPriorityDraft(option)}
-                      className={[
-                        "rounded-full px-3 py-1.5 text-xs font-bold uppercase tracking-[0.18em] transition",
-                        priorityDraft === option ? "glass-button-primary" : "glass-button",
-                      ].join(" ")}
-                    >
-                      {option}
-                    </button>
-                  ))}
-                </div>
-                <p className="pt-2 text-sm leading-6 text-[var(--theme-text-muted)]">
-                  The uploaded image is stored locally with the course metadata and will immediately update the library cards.
-                </p>
-              </div>
-            </div>
-
-            <div className="mt-6 flex gap-3">
-              <button
-                type="button"
-                onClick={handleCloseEditDialog}
-                className="glass-button flex-1 rounded-2xl px-4 py-3 text-sm font-bold"
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                onClick={handleConfirmEdit}
-                className="glass-button-primary flex-1 rounded-2xl px-4 py-3 text-sm font-bold"
-              >
-                Save changes
-              </button>
-            </div>
-          </div>
-        </div>
+        <DashboardEditDialog
+          course={courseToEdit}
+          defaultCoursePriority={DEFAULT_COURSE_PRIORITY}
+          titleDraft={titleDraft}
+          priorityDraft={priorityDraft}
+          thumbnailDraft={thumbnailDraft}
+          onTitleDraftChange={setTitleDraft}
+          onPriorityDraftChange={setPriorityDraft}
+          onThumbnailSelect={handleThumbnailSelect}
+          onThumbnailClear={() => setThumbnailDraft("")}
+          onCancel={handleCloseEditDialog}
+          onConfirm={handleConfirmEdit}
+        />
       )}
 
       <div className="mx-auto flex w-full max-w-[1520px] flex-col gap-8 pb-10">
-        <header className="editorial-panel rounded-[2.25rem] px-5 py-6 md:px-7">
-          <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
-            <div className="space-y-3">
-              <button
-                type="button"
-                onClick={onBack}
-                className="glass-button inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-bold"
-              >
-                <ArrowLeft className="h-4 w-4" />
-                Back to library
-              </button>
-              <div>
-                <p className="section-label">Library dashboard</p>
-                <h1 className="mt-2 text-4xl font-black tracking-[-0.04em] text-[var(--theme-text)] md:text-5xl">
-                  Manage your course catalog
-                </h1>
-                <p className="mt-3 max-w-2xl text-sm leading-7 text-[var(--theme-text-muted)] md:text-base">
-                  This view is for maintenance tasks only: edit labels, clean up old courses, and keep the main library screen focused on opening content.
-                </p>
-              </div>
-            </div>
-
-            <div className="theme-soft-panel grid gap-3 rounded-[1.6rem] p-4 lg:min-w-[260px]">
-              <p className="section-label">Dashboard stats</p>
-              <p className="text-4xl font-black tracking-[-0.05em] text-[var(--theme-text)]">
-                {courses.length}
-              </p>
-              <p className="text-sm text-[var(--theme-text-muted)]">
-                Total courses currently indexed in your local library.
-              </p>
-            </div>
-          </div>
-        </header>
-
-        <section className="editorial-panel rounded-[2rem] p-4 md:p-5">
-          <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-center">
-            <div className="relative">
-              <div className="pointer-events-none absolute inset-y-0 left-5 flex items-center">
-                <Search className="h-5 w-5 text-[var(--theme-text-faint)]" />
-              </div>
-              <input
-                type="text"
-                placeholder="Search courses to manage..."
-                value={searchQuery}
-                onChange={(event) => setSearchQuery(event.target.value)}
-                className="theme-field w-full rounded-[1.4rem] py-4 pl-14 pr-6 transition-all"
-              />
-            </div>
-
-            <div className="theme-soft-panel rounded-[1.3rem] px-4 py-3 text-sm text-[var(--theme-text-soft)]">
-              <span className="font-bold text-white">{filteredCourses.length}</span>{" "}
-              {filteredCourses.length === 1 ? "course" : "courses"} in view
-            </div>
-          </div>
-        </section>
-
-        <section className="editorial-panel overflow-hidden rounded-[2rem]">
-          {filteredCourses.length > 0 ? (
-            <div className="overflow-x-auto">
-              <table className="min-w-full border-collapse">
-                <thead>
-                  <tr className="border-b border-[var(--theme-border)] text-left">
-                    <th className="theme-label-muted px-5 py-4 text-[11px] font-bold uppercase tracking-[0.22em]">Course</th>
-                    <th className="theme-label-muted px-5 py-4 text-[11px] font-bold uppercase tracking-[0.22em]">Priority</th>
-                    <th className="theme-label-muted px-5 py-4 text-[11px] font-bold uppercase tracking-[0.22em]">Lessons</th>
-                    <th className="theme-label-muted px-5 py-4 text-[11px] font-bold uppercase tracking-[0.22em]">Access</th>
-                    <th className="theme-label-muted px-5 py-4 text-[11px] font-bold uppercase tracking-[0.22em]">Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filteredCourses.map((course) => (
-                    <tr key={course.id} className="border-b border-[var(--theme-border)] last:border-b-0">
-                      <td className="px-5 py-5">
-                        <div className="flex items-center gap-4">
-                          <div className="h-14 w-20 overflow-hidden rounded-2xl border border-[var(--theme-border)] bg-[var(--theme-panel)]">
-                            {course.thumbnail ? (
-                              <img
-                                src={course.thumbnail}
-                                alt={course.title}
-                                className="h-full w-full object-cover"
-                              />
-                            ) : (
-                              <div className="theme-preview-art flex h-full items-end p-2">
-                                <span className="theme-chip-dark rounded-full px-2 py-0.5 text-[9px] font-bold uppercase tracking-[0.18em]">
-                                  {course.priority || DEFAULT_COURSE_PRIORITY}
-                                </span>
-                              </div>
-                            )}
-                          </div>
-                          <div className="min-w-0">
-                            <p className="truncate text-base font-black text-[var(--theme-text)]">
-                              {course.title}
-                            </p>
-                            <p className="mt-1 truncate text-sm text-[var(--theme-text-muted)]">
-                              {course.path}
-                            </p>
-                          </div>
-                        </div>
-                      </td>
-                      <td className="px-5 py-5">
-                        <button
-                          type="button"
-                          onClick={() => handleRequestEditPriority(course.id)}
-                          className="glass-button rounded-full px-3 py-1.5 text-xs font-bold uppercase tracking-[0.18em]"
-                        >
-                          {course.priority || DEFAULT_COURSE_PRIORITY}
-                        </button>
-                      </td>
-                      <td className="px-5 py-5 text-sm font-semibold text-[var(--theme-text-soft)]">
-                        {course.lessonCount}
-                      </td>
-                      <td className="px-5 py-5 text-sm text-[var(--theme-text-muted)]">
-                        {course.hasHandle ? "Saved access" : "Manual reopen"}
-                      </td>
-                      <td className="px-5 py-5">
-                        <div className="flex flex-wrap gap-2">
-                          <button
-                            type="button"
-                            onClick={() => handleRequestEditPriority(course.id)}
-                            className="glass-button inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-bold"
-                          >
-                            <PencilLine className="h-4 w-4" />
-                            Edit
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => setCourseIdToDelete(course.id)}
-                            className="glass-button inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-bold text-red-100 hover:border-red-400/35 hover:bg-red-500/18"
-                          >
-                            <Trash2 className="h-4 w-4" />
-                            Delete
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          ) : (
-            <div className="px-6 py-20 text-center">
-              <h2 className="text-2xl font-black text-[var(--theme-text)]">No courses found</h2>
-              <p className="mt-3 text-sm leading-7 text-[var(--theme-text-muted)]">
-                Adjust your search or head back to the library to import more courses.
-              </p>
-            </div>
-          )}
-        </section>
+        <DashboardHeaderSection coursesCount={courses.length} onBack={onBack} />
+        <DashboardToolbarSection
+          filteredCount={filteredCourses.length}
+          searchQuery={searchQuery}
+          onSearchQueryChange={setSearchQuery}
+          onAddCourse={onAddCourse}
+        />
+        <DashboardCoursesTable
+          courses={filteredCourses}
+          defaultCoursePriority={DEFAULT_COURSE_PRIORITY}
+          onEdit={handleRequestEditPriority}
+          onDelete={setCourseIdToDelete}
+        />
       </div>
     </div>
   );

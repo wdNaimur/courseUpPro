@@ -373,6 +373,7 @@ export default function App() {
       <LibraryDashboard
         courses={courses}
         onBack={() => navigateTo({ name: "home", path: appRoutes.home })}
+        onAddCourse={() => navigateTo({ name: "home", path: appRoutes.home })}
         onSaveCourses={saveCourses}
       />
     );
