@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState, useCallback } from "react";
-import { ArrowLeft, PanelLeftClose, PanelLeftOpen } from "lucide-react";
+import { ArrowLeft, Menu, X } from "lucide-react";
 import type { LessonVideo } from "../types/course";
 import {
   buildCourseKey,
@@ -23,18 +23,22 @@ import {
   updateLessonPlayback,
   type CourseProgressState,
 } from "../utils/course-progress";
+import type { LessonDurationMap } from "../utils/duration";
 import CourseSidebar from "./player/CourseSidebar";
 import VideoDisplay from "./player/VideoDisplay";
 
 type LocalCoursePlayerProps = {
   initialFiles?: File[];
+  initialLessonDurations?: LessonDurationMap;
   onBack?: () => void;
 };
 
 export default function LocalCoursePlayer({
   initialFiles,
+  initialLessonDurations,
   onBack,
 }: LocalCoursePlayerProps) {
+  const isMobileViewport = () => window.innerWidth < 1024;
   const videoRef = useRef<HTMLVideoElement | null>(null);
 
   const [lessonVideos, setLessonVideos] = useState<LessonVideo[]>([]);
@@ -53,7 +57,12 @@ export default function LocalCoursePlayer({
     {},
   );
   const [playbackSpeed, setPlaybackSpeed] = useState(1);
-  const [isSidebarVisible, setIsSidebarVisible] = useState(true);
+  const [isSidebarVisible, setIsSidebarVisible] = useState(() => {
+    return typeof window !== "undefined" ? !isMobileViewport() : true;
+  });
+  const [isLoadingCourse, setIsLoadingCourse] = useState(() => {
+    return Boolean(initialFiles && initialFiles.length > 0);
+  });
   const hasInitialized = useRef(false);
   const lastSavedPlaybackTimeRef = useRef(0);
   const playbackSpeedRef = useRef(1);
@@ -76,6 +85,7 @@ export default function LocalCoursePlayer({
     () => lessonVideos.find((lesson) => lesson.id === activeLessonId) ?? null,
     [lessonVideos, activeLessonId],
   );
+  const activeLessonFile = activeLesson?.file ?? null;
 
   const folderTree = useMemo(
     () => createFolderTree(lessonVideos),
@@ -90,6 +100,10 @@ export default function LocalCoursePlayer({
   const progressPercent = lessonVideos.length
     ? Math.round((completedCount / lessonVideos.length) * 100)
     : 0;
+  const totalDuration = useMemo(
+    () => lessonVideos.reduce((total, lesson) => total + lesson.duration, 0),
+    [lessonVideos],
+  );
 
   const isCurrentLessonCompleted = activeLessonId
     ? isLessonCompleted(courseProgress, activeLessonId)
@@ -130,9 +144,9 @@ export default function LocalCoursePlayer({
 
   useEffect(() => {
     const video = videoRef.current;
-    if (!activeLesson || !video) return;
+    if (!activeLessonId || !activeLessonFile || !video) return;
 
-    const nextUrl = URL.createObjectURL(activeLesson.file);
+    const nextUrl = URL.createObjectURL(activeLessonFile);
     lastSavedPlaybackTimeRef.current = 0;
     const handleLoadedMetadata = () => {
       applyPlaybackSpeed(video);
@@ -150,7 +164,7 @@ export default function LocalCoursePlayer({
       video.removeEventListener("loadedmetadata", handleLoadedMetadata);
       URL.revokeObjectURL(nextUrl);
     };
-  }, [activeLesson]);
+  }, [activeLessonFile, activeLessonId, applyPlaybackSpeed]);
 
   const getLessonCompletion = (lessonId: string) =>
     isLessonCompleted(courseProgress, lessonId);
@@ -191,6 +205,9 @@ export default function LocalCoursePlayer({
 
     setActiveLessonId(lessonId);
     openLessonFolders(nextLesson);
+    if (isMobileViewport()) {
+      setIsSidebarVisible(false);
+    }
   };
 
   const handleToggleComplete = (lessonId: string, checked: boolean) => {
@@ -201,7 +218,7 @@ export default function LocalCoursePlayer({
 
   useEffect(() => {
     const video = videoRef.current;
-    if (!video || !activeLesson) return;
+    if (!video || !activeLessonId) return;
 
     const persistPlaybackPosition = () => {
       const playbackTime = Number.isFinite(video.currentTime) ? video.currentTime : 0;
@@ -219,7 +236,7 @@ export default function LocalCoursePlayer({
       setCourseProgress((previousState) =>
         updateLessonPlayback(
           previousState,
-          activeLesson.id,
+          activeLessonId,
           playbackTime,
           duration,
         ),
@@ -229,7 +246,7 @@ export default function LocalCoursePlayer({
     const handleLoadedMetadata = () => {
       const savedPlaybackTime = getLessonPlaybackTime(
         courseProgressRef.current,
-        activeLesson.id,
+        activeLessonId,
       );
       const duration = Number.isFinite(video.duration) ? video.duration : 0;
       const resumeTime =
@@ -257,7 +274,7 @@ export default function LocalCoursePlayer({
       video.removeEventListener("pause", persistPlaybackPosition);
       video.removeEventListener("ended", persistPlaybackPosition);
     };
-  }, [activeLesson, videoRef]);
+  }, [activeLessonId]);
 
   const handleCompleteAndContinue = () => {
     if (!activeLessonId) return;
@@ -292,101 +309,230 @@ export default function LocalCoursePlayer({
     return undefined;
   }, [lessonVideos, activeLessonId]);
 
-  const processFiles = useCallback((files: File[]) => {
+  const processFiles = useCallback(
+    async (files: File[], lessonDurations: LessonDurationMap = {}) => {
     const videoFiles = files.filter(isVideoFile);
 
-    if (!videoFiles.length) return;
-
-    const folderName = getCourseFolderName(videoFiles);
-
-    const mappedLessons = videoFiles
-      .map((file, index) => {
-        const path = getRelativePath(file);
-        const pathParts = path.split("/");
-        const fileName = pathParts[pathParts.length - 1];
-        const folderParts = pathParts.length > 2 ? pathParts.slice(1, -1) : [];
-        const folderLabel = folderParts.length
-          ? folderParts.map((part) => normalizeSectionTitle(part)).join(" / ")
-          : "Main section";
-
-        return {
-          id: path,
-          displayIndex: index + 1,
-          title: normalizeTitle(fileName) || `Lesson ${index + 1}`,
-          file,
-          path,
-          folderLabel,
-          folderParts,
-        };
-      })
-      .sort((firstLesson, secondLesson) =>
-        firstLesson.path.localeCompare(secondLesson.path, undefined, {
-          numeric: true,
-          sensitivity: "base",
-        }),
-      )
-      .map((lesson, index) => ({
-        ...lesson,
-        displayIndex: index + 1,
-      }));
-
-    const normalizedLessons = stripSharedWrapperFolder(
-      mappedLessons,
-      folderName,
-    );
-
-    const courseKey = buildCourseKey(folderName, normalizedLessons);
-
-    setLessonVideos(normalizedLessons);
-    setActiveCourseKey(courseKey);
-    setCourseTitle(folderName);
-    setCourseSubtitle(
-      `${normalizedLessons.length} lesson video${normalizedLessons.length > 1 ? "s" : ""} found in this course folder.`,
-    );
+    if (!videoFiles.length) {
+      setIsLoadingCourse(false);
+      return;
+    }
 
     try {
-      const savedProgress = readCourseProgress(localStorage.getItem(courseKey));
-      setCourseProgress(savedProgress);
-      setPlaybackSpeed(savedProgress.playbackSpeed);
+      const folderName = getCourseFolderName(videoFiles);
 
-      const preferredLesson =
-        normalizedLessons.find(
-          (lesson) => savedProgress.lastLessonId === lesson.id,
-        ) ??
-        normalizedLessons.find(
-          (lesson) => !isLessonCompleted(savedProgress, lesson.id),
-        ) ??
-        normalizedLessons[0];
+      const mappedLessons = videoFiles
+        .map((file, index) => {
+          const path = getRelativePath(file);
+          const pathParts = path.split("/");
+          const fileName = pathParts[pathParts.length - 1];
+          const folderParts = pathParts.length > 2 ? pathParts.slice(1, -1) : [];
+          const folderLabel = folderParts.length
+            ? folderParts.map((part) => normalizeSectionTitle(part)).join(" / ")
+            : "Main section";
 
-      setAccordionState({});
+          return {
+            id: path,
+            displayIndex: index + 1,
+            title: normalizeTitle(fileName) || `Lesson ${index + 1}`,
+            file,
+            path,
+            folderLabel,
+            folderParts,
+            duration: lessonDurations[path] ?? 0,
+          };
+        })
+        .sort((firstLesson, secondLesson) =>
+          firstLesson.path.localeCompare(secondLesson.path, undefined, {
+            numeric: true,
+            sensitivity: "base",
+          }),
+        )
+        .map((lesson, index) => ({
+          ...lesson,
+          displayIndex: index + 1,
+        }));
 
-      if (preferredLesson) {
-        setActiveLessonId(preferredLesson.id);
-        openLessonFolders(preferredLesson);
+      const normalizedLessons = stripSharedWrapperFolder(
+        mappedLessons,
+        folderName,
+      );
+
+      const courseKey = buildCourseKey(folderName, normalizedLessons);
+
+      setLessonVideos(normalizedLessons);
+      setActiveCourseKey(courseKey);
+      setCourseTitle(folderName);
+      setCourseSubtitle(
+        `${normalizedLessons.length} lesson video${normalizedLessons.length > 1 ? "s" : ""} found in this course folder.`,
+      );
+
+      try {
+        const savedProgress = readCourseProgress(localStorage.getItem(courseKey));
+        setCourseProgress(savedProgress);
+        setPlaybackSpeed(savedProgress.playbackSpeed);
+
+        const preferredLesson =
+          normalizedLessons.find(
+            (lesson) => savedProgress.lastLessonId === lesson.id,
+          ) ??
+          normalizedLessons.find(
+            (lesson) => !isLessonCompleted(savedProgress, lesson.id),
+          ) ??
+          normalizedLessons[0];
+
+        setAccordionState({});
+
+        if (preferredLesson) {
+          setActiveLessonId(preferredLesson.id);
+          openLessonFolders(preferredLesson);
+        }
+      } catch {
+        setCourseProgress({
+          lessons: {},
+          lastLessonId: null,
+          playbackSpeed: 1,
+        });
+        setPlaybackSpeed(1);
+        setAccordionState({});
+        if (normalizedLessons[0]) {
+          setActiveLessonId(normalizedLessons[0].id);
+          openLessonFolders(normalizedLessons[0]);
+        }
       }
-    } catch {
-      setCourseProgress({
-        lessons: {},
-        lastLessonId: null,
-        playbackSpeed: 1,
-      });
-      setPlaybackSpeed(1);
-      setAccordionState({});
-      if (normalizedLessons[0]) {
-        setActiveLessonId(normalizedLessons[0].id);
-        openLessonFolders(normalizedLessons[0]);
-      }
+    } finally {
+      setIsLoadingCourse(false);
     }
   }, []);
 
   useEffect(() => {
     if (initialFiles && initialFiles.length > 0 && !hasInitialized.current) {
       hasInitialized.current = true;
+      setIsLoadingCourse(true);
       setTimeout(() => {
-        processFiles(initialFiles);
+        void processFiles(initialFiles, initialLessonDurations);
       }, 0);
     }
-  }, [initialFiles, processFiles]);
+  }, [initialFiles, initialLessonDurations, processFiles]);
+
+  useEffect(() => {
+    if (!Object.keys(initialLessonDurations ?? {}).length) {
+      return;
+    }
+
+    setLessonVideos((previousLessons) =>
+      previousLessons.map((lesson) => {
+        const nextDuration = initialLessonDurations?.[lesson.path] ?? lesson.duration;
+        return nextDuration === lesson.duration
+          ? lesson
+          : {
+              ...lesson,
+              duration: nextDuration,
+            };
+      }),
+    );
+  }, [initialLessonDurations]);
+
+  if (isLoadingCourse) {
+    return (
+      <div className="flex h-screen flex-col overflow-hidden bg-[linear-gradient(180deg,var(--theme-bg)_0%,var(--theme-bg)_50%,var(--theme-bg-alt)_100%)] text-[var(--theme-text)]">
+        <header className="z-20 shrink-0 border-b border-[var(--theme-border)] bg-[color:color-mix(in_srgb,var(--theme-bg)_90%,transparent)] backdrop-blur">
+          <div className="flex h-16 items-center justify-between px-4 md:px-6">
+            <div className="flex items-center gap-4">
+              <div className="skeleton-block h-10 w-10 rounded-2xl" />
+              <div className="h-6 w-px bg-[var(--theme-border)]" />
+              <div className="hidden md:block skeleton-block h-3.5 w-40" />
+            </div>
+            {onBack ? (
+              <div className="skeleton-block h-10 w-36 rounded-2xl" />
+            ) : (
+              <div />
+            )}
+          </div>
+        </header>
+
+        <main className="flex flex-1 overflow-hidden">
+          <aside className="h-full w-[360px] shrink-0 overflow-hidden border-r border-[var(--theme-border)] bg-[color:color-mix(in_srgb,var(--theme-panel)_56%,transparent)] p-2">
+            <div className="glass-panel flex h-full flex-col rounded-3xl p-5">
+              <div className="space-y-3">
+                <div className="skeleton-block h-5 w-32" />
+                <div className="skeleton-block h-3.5 w-48" />
+              </div>
+
+              <div className="mt-6 space-y-2.5">
+                <div className="flex items-center justify-between gap-3">
+                  <div className="skeleton-block h-3 w-24" />
+                  <div className="skeleton-block h-3 w-14" />
+                </div>
+                <div className="skeleton-block h-3 w-28" />
+                <div className="skeleton-block h-1.5 w-full rounded-full" />
+              </div>
+
+              <div className="mt-6 flex-1 space-y-3">
+                <div className="skeleton-block h-[74px] w-full rounded-2xl" />
+                <div className="skeleton-block h-[74px] w-full rounded-2xl" />
+                <div className="skeleton-block h-[74px] w-[92%] rounded-2xl" />
+                <div className="skeleton-block h-[74px] w-full rounded-2xl" />
+                <div className="skeleton-block h-[74px] w-[85%] rounded-2xl" />
+              </div>
+            </div>
+          </aside>
+
+          <div className="h-full flex-1 overflow-hidden p-2">
+            <section className="flex h-full flex-col gap-2">
+              <div className="group relative overflow-hidden rounded-3xl border border-[var(--theme-border)] bg-black shadow-2xl shadow-black/40">
+                <div className="aspect-video w-full bg-black p-4 md:p-5">
+                  <div className="flex h-full flex-col justify-between rounded-[1.75rem] border border-[var(--theme-border)] bg-[linear-gradient(180deg,rgba(255,255,255,0.03),rgba(255,255,255,0.01))] p-4 md:p-6">
+                    <div className="space-y-3">
+                      <div className="skeleton-block h-6 w-1/3" />
+                      <div className="skeleton-block h-4 w-2/3" />
+                    </div>
+
+                    <div className="space-y-4">
+                      <div className="skeleton-block h-1.5 w-full rounded-full" />
+                      <div className="flex items-center justify-between gap-3 text-white">
+                        <div className="flex items-center gap-2">
+                          <div className="skeleton-block h-9 w-9 rounded-full" />
+                          <div className="skeleton-block h-4 w-28" />
+                          <div className="skeleton-block h-9 w-9 rounded-full" />
+                          <div className="skeleton-block h-1.5 w-20 rounded-full md:w-28" />
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <div className="skeleton-block h-9 w-20 rounded-full" />
+                          <div className="skeleton-block h-9 w-9 rounded-full" />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="grid gap-6 rounded-3xl border border-[var(--theme-border)] bg-[color:color-mix(in_srgb,var(--theme-panel)_95%,transparent)] p-6 shadow-2xl shadow-black/20 md:p-8">
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <div className="skeleton-block h-7 w-2/3" />
+                    <div className="flex items-center gap-2">
+                      <div className="skeleton-block h-7 w-28 rounded-full" />
+                      <div className="skeleton-block h-3 w-2" />
+                      <div className="skeleton-block h-4 w-40" />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="border-t border-[var(--theme-border)] pt-6">
+                  <div className="skeleton-block mb-3 h-3.5 w-20" />
+                  <div className="space-y-2">
+                    <div className="skeleton-block h-4 w-full rounded-lg" />
+                    <div className="skeleton-block h-4 w-5/6 rounded-lg" />
+                  </div>
+                </div>
+              </div>
+            </section>
+          </div>
+        </main>
+      </div>
+    );
+  }
 
   return (
     <div className="flex h-screen flex-col overflow-hidden bg-[linear-gradient(180deg,var(--theme-bg)_0%,var(--theme-bg)_50%,var(--theme-bg-alt)_100%)] text-[var(--theme-text)]">
@@ -401,9 +547,9 @@ export default function LocalCoursePlayer({
               title={isSidebarVisible ? "Hide course sidebar" : "Show course sidebar"}
             >
               {isSidebarVisible ? (
-                <PanelLeftClose className="h-4 w-4 text-[var(--theme-accent-soft)]" />
+                <X className="h-4 w-4 text-[var(--theme-accent-soft)]" />
               ) : (
-                <PanelLeftOpen className="h-4 w-4 text-[var(--theme-accent-soft)]" />
+                <Menu className="h-4 w-4 text-[var(--theme-accent-soft)]" />
               )}
             </button>
             <div className="h-6 w-px bg-[var(--theme-border)]"></div>
@@ -426,15 +572,32 @@ export default function LocalCoursePlayer({
         </div>
       </header>
 
-      <main className="flex flex-1 overflow-hidden">
-        {isSidebarVisible && (
-          <div className="h-full w-[360px] shrink-0 overflow-y-auto border-r border-[var(--theme-border)] bg-[color:color-mix(in_srgb,var(--theme-panel)_56%,transparent)] scrollbar-thin scrollbar-track-transparent">
+      <main className="relative flex flex-1 overflow-hidden lg:flex-row">
+        <div
+          className={[
+            "pointer-events-none absolute inset-0 z-[80] bg-[var(--theme-overlay)]/70 opacity-0 transition-opacity duration-300 lg:hidden",
+            isSidebarVisible ? "pointer-events-auto opacity-100" : "",
+          ].join(" ")}
+          onClick={() => setIsSidebarVisible(false)}
+        />
+
+        <div
+          className={[
+            "fixed inset-x-0 bottom-0 z-[90] max-h-[72vh] overflow-y-auto rounded-t-[1.8rem] border border-b-0 border-[var(--theme-border)] bg-[color:color-mix(in_srgb,var(--theme-panel)_92%,transparent)] shadow-[0_-24px_80px_rgba(0,0,0,0.38)] transition-transform duration-300 scrollbar-thin scrollbar-track-transparent lg:static lg:z-auto lg:max-h-none lg:rounded-none lg:border-0 lg:bg-[color:color-mix(in_srgb,var(--theme-panel)_56%,transparent)] lg:shadow-none lg:transition-[width,opacity] lg:duration-300",
+            isSidebarVisible
+              ? "translate-y-0 lg:w-[360px] lg:opacity-100"
+              : "translate-y-full lg:w-0 lg:opacity-0 lg:overflow-hidden lg:pointer-events-none",
+          ].join(" ")}
+        >
+          <div className="mx-auto mt-3 h-1.5 w-16 rounded-full bg-white/15 lg:hidden" />
+          <div className="lg:h-full lg:w-[360px]">
             <CourseSidebar
               courseTitle={courseTitle}
               courseSubtitle={courseSubtitle}
               completedCount={completedCount}
               totalLessons={lessonVideos.length}
               progressPercent={progressPercent}
+              totalDuration={totalDuration}
               folderTree={folderTree}
               activeLessonId={activeLessonId}
               getAccordionOpen={getAccordionOpen}
@@ -445,9 +608,9 @@ export default function LocalCoursePlayer({
               formatLessonMeta={formatLessonMeta}
             />
           </div>
-        )}
+        </div>
 
-        <div className="h-full flex-1 overflow-y-auto scrollbar-thin scrollbar-track-transparent">
+        <div className="min-h-0 flex-1 overflow-y-auto scrollbar-thin scrollbar-track-transparent">
           <VideoDisplay
             activeLesson={activeLesson}
             courseTitle={courseTitle}
