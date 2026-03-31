@@ -1,4 +1,5 @@
 import type { FolderNode, LessonVideo } from "../../types/course";
+import { formatDurationCompact } from "../../utils/duration";
 import FolderAccordion from "./FolderAccordion";
 
 type CourseSidebarProps = {
@@ -7,6 +8,7 @@ type CourseSidebarProps = {
   completedCount: number;
   totalLessons: number;
   progressPercent: number;
+  totalDuration: number;
   folderTree: FolderNode;
   activeLessonId: string | null;
   getAccordionOpen: (folderKey: string, defaultState?: boolean) => boolean;
@@ -23,6 +25,7 @@ export default function CourseSidebar({
   completedCount,
   totalLessons,
   progressPercent,
+  totalDuration,
   folderTree,
   activeLessonId,
   getAccordionOpen,
@@ -32,6 +35,8 @@ export default function CourseSidebar({
   onToggleComplete,
   formatLessonMeta,
 }: CourseSidebarProps) {
+  const totalDurationLabel = formatDurationCompact(totalDuration);
+
   return (
     <aside className="flex min-h-0 flex-col border-[var(--theme-border)] bg-[color:color-mix(in_srgb,var(--theme-panel)_56%,transparent)] lg:border-r">
       <div className="glass-panel m-2 mb-0 flex flex-col gap-4 rounded-3xl p-5">
@@ -47,9 +52,10 @@ export default function CourseSidebar({
         <div className="space-y-2.5">
           <div className="flex items-center justify-between text-[11px] font-bold uppercase tracking-wider text-[var(--theme-text-muted)]">
             <span>{progressPercent}% Complete</span>
-            <span>
-              {completedCount} / {totalLessons}
-            </span>
+            {totalDurationLabel ? <span>{totalDurationLabel}</span> : <span />}
+          </div>
+          <div className="text-[11px] font-medium text-[var(--theme-text-faint)]">
+            {completedCount} / {totalLessons} lessons completed
           </div>
           <div className="h-1.5 overflow-hidden rounded-full bg-[var(--theme-bg)]">
             <div

@@ -6,6 +6,7 @@ export type LessonVideo = {
   path: string;
   folderLabel: string;
   folderParts: string[];
+  duration: number;
 };
 
 export type FolderNode = {
@@ -22,5 +23,6 @@ export type CourseMetadata = {
   path: string;
   lastPlayedAt: number;
   lessonCount: number;
+  totalDuration?: number;
   hasHandle?: boolean;
 };

@@ -2,8 +2,10 @@ import { Clock3, Trash2 } from "lucide-react";
 import type { CourseMetadata } from "../../types/course";
 import {
   countCompletedLessons,
+  getTrackedCourseDuration,
   readCourseProgress,
 } from "../../utils/course-progress";
+import { formatDurationCompact } from "../../utils/duration";
 
 type CourseCardProps = {
   course: CourseMetadata;
@@ -20,6 +22,8 @@ export default function CourseCard({
 }: CourseCardProps) {
   const progressState = readCourseProgress(localStorage.getItem(course.id));
   const completedCount = countCompletedLessons(progressState);
+  const courseDuration = course.totalDuration ?? getTrackedCourseDuration(progressState);
+  const durationLabel = formatDurationCompact(courseDuration);
   const progressRatio = course.lessonCount
     ? Math.round((completedCount / course.lessonCount) * 100)
     : 0;
@@ -86,6 +90,12 @@ export default function CourseCard({
 
           <div className="flex flex-wrap items-center gap-2 text-xs text-[var(--theme-text-muted)]">
             <span>{completedCount}/{course.lessonCount} lessons completed</span>
+            {durationLabel ? (
+              <>
+                <span className="text-white/25">|</span>
+                <span>{durationLabel}</span>
+              </>
+            ) : null}
             <span className="text-white/25">|</span>
             <span>{accessLabel}</span>
           </div>

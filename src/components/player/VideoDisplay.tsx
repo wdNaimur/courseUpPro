@@ -60,6 +60,10 @@ export default function VideoDisplay({
   const [currentTime, setCurrentTime] = useState(0);
   const [volume, setVolume] = useState(1);
   const [isMuted, setIsMuted] = useState(false);
+  const [isFinePointer, setIsFinePointer] = useState(() => {
+    if (typeof window === "undefined") return true;
+    return window.matchMedia("(pointer: fine)").matches;
+  });
   const [isInteractingWithControls, setIsInteractingWithControls] =
     useState(false);
   const [showPauseOverlay, setShowPauseOverlay] = useState(false);
@@ -92,6 +96,22 @@ export default function VideoDisplay({
 
   const cancelAutoPlay = useCallback(() => {
     setShowAutoPlay(false);
+  }, []);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const mediaQuery = window.matchMedia("(pointer: fine)");
+    const handlePointerChange = (event: MediaQueryListEvent) => {
+      setIsFinePointer(event.matches);
+    };
+
+    setIsFinePointer(mediaQuery.matches);
+    mediaQuery.addEventListener("change", handlePointerChange);
+
+    return () => {
+      mediaQuery.removeEventListener("change", handlePointerChange);
+    };
   }, []);
 
   useEffect(() => {
@@ -444,6 +464,10 @@ export default function VideoDisplay({
       handleMouseMove();
     }
 
+    if (!isFinePointer) {
+      return;
+    }
+
     const target = event.target as HTMLElement;
     const isVideoSurface = target.tagName.toLowerCase() === "video";
     if (isVideoSurface) {
@@ -453,7 +477,7 @@ export default function VideoDisplay({
 
   if (!activeLesson) {
     return (
-      <section className="flex h-full items-center justify-center p-4 md:p-12">
+      <section className="flex min-h-full items-center justify-center p-4 md:p-12">
         <div className="grid max-w-2xl place-items-center gap-4 rounded-3xl border border-[var(--theme-border)] bg-[color:color-mix(in_srgb,var(--theme-panel)_90%,transparent)] p-12 text-center shadow-2xl shadow-black/20">
           <div className="rounded-full bg-[color:color-mix(in_srgb,var(--theme-accent)_20%,transparent)] p-6">
             <PlayCircle className="h-16 w-16 text-[var(--theme-accent-warm)]" />
@@ -481,13 +505,15 @@ export default function VideoDisplay({
           "group relative overflow-hidden bg-black shadow-2xl shadow-black/40 transition-all",
           isFullscreen
             ? "h-screen w-screen rounded-none"
-            : "rounded-3xl border border-[var(--theme-border)]",
+            : "mx-auto w-full rounded-3xl border border-[var(--theme-border)] md:max-h-[80vh]",
         ].join(" ")}
       >
         <div
           className={[
-            "w-full bg-black flex items-center justify-center",
-            isFullscreen ? "h-full" : "aspect-video",
+            "flex w-full items-center justify-center bg-black",
+            isFullscreen
+              ? "h-full"
+              : "aspect-video max-h-[100svh] md:max-h-[80vh]",
           ].join(" ")}
         >
           <video
@@ -760,6 +786,10 @@ export default function VideoDisplay({
                 e.stopPropagation();
                 onPreviousLesson();
               }}
+              onDoubleClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+              }}
               onMouseEnter={handleControlsMouseEnter}
               onMouseLeave={handleControlsMouseLeave}
               disabled={!hasPreviousLesson}
@@ -777,6 +807,10 @@ export default function VideoDisplay({
                 e.preventDefault();
                 e.stopPropagation();
                 onCompleteAndContinue();
+              }}
+              onDoubleClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
               }}
               onMouseEnter={handleControlsMouseEnter}
               onMouseLeave={handleControlsMouseLeave}
