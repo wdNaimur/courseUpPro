@@ -447,7 +447,7 @@ export default function LocalCoursePlayer({
   if (isLoadingCourse) {
     return (
       <div className="flex h-screen flex-col overflow-hidden bg-[linear-gradient(180deg,var(--theme-bg)_0%,var(--theme-bg)_50%,var(--theme-bg-alt)_100%)] text-[var(--theme-text)]">
-        <header className="z-20 shrink-0 border-b border-[var(--theme-border)] bg-[color:color-mix(in_srgb,var(--theme-bg)_90%,transparent)] backdrop-blur">
+        <header className="theme-header-shell z-20 shrink-0 border-b border-[var(--theme-border)] backdrop-blur">
           <div className="flex h-16 items-center justify-between px-4 md:px-6">
             <div className="flex items-center gap-4">
               <div className="skeleton-block h-10 w-10 rounded-2xl" />
@@ -463,7 +463,7 @@ export default function LocalCoursePlayer({
         </header>
 
         <main className="flex flex-1 overflow-hidden">
-          <aside className="h-full w-[360px] shrink-0 overflow-hidden border-r border-[var(--theme-border)] bg-[color:color-mix(in_srgb,var(--theme-panel)_56%,transparent)] p-2">
+          <aside className="theme-sidebar-shell h-full w-[360px] shrink-0 overflow-hidden border-r border-[var(--theme-border)] p-2">
             <div className="glass-panel flex h-full flex-col rounded-3xl p-5">
               <div className="space-y-3">
                 <div className="skeleton-block h-5 w-32" />
@@ -493,7 +493,7 @@ export default function LocalCoursePlayer({
             <section className="flex h-full flex-col gap-2">
               <div className="group relative overflow-hidden rounded-3xl border border-[var(--theme-border)] bg-black shadow-2xl shadow-black/40">
                 <div className="aspect-video w-full bg-black p-4 md:p-5">
-                  <div className="flex h-full flex-col justify-between rounded-[1.75rem] border border-[var(--theme-border)] bg-[linear-gradient(180deg,rgba(255,255,255,0.03),rgba(255,255,255,0.01))] p-4 md:p-6">
+                  <div className="theme-glass-inset flex h-full flex-col justify-between rounded-[1.75rem] border border-[var(--theme-border)] p-4 md:p-6">
                     <div className="space-y-3">
                       <div className="skeleton-block h-6 w-1/3" />
                       <div className="skeleton-block h-4 w-2/3" />
@@ -518,7 +518,7 @@ export default function LocalCoursePlayer({
                 </div>
               </div>
 
-              <div className="grid gap-6 rounded-3xl border border-[var(--theme-border)] bg-[color:color-mix(in_srgb,var(--theme-panel)_95%,transparent)] p-6 shadow-2xl shadow-black/20 md:p-8">
+              <div className="theme-panel-surface grid gap-6 rounded-3xl border border-[var(--theme-border)] p-6 md:p-8">
                 <div className="space-y-4">
                   <div className="space-y-2">
                     <div className="skeleton-block h-7 w-2/3" />
@@ -557,7 +557,7 @@ export default function LocalCoursePlayer({
         />
       )}
 
-      <header className="z-20 shrink-0 border-b border-[var(--theme-border)] bg-[color:color-mix(in_srgb,var(--theme-bg)_90%,transparent)] backdrop-blur">
+      <header className="theme-header-shell z-20 shrink-0 border-b border-[var(--theme-border)] backdrop-blur">
         <div className="flex h-16 items-center justify-between px-4 md:px-6">
           <div className="flex items-center gap-4">
             {onBack && (
@@ -594,7 +594,7 @@ export default function LocalCoursePlayer({
       <main className="relative flex flex-1 overflow-hidden lg:flex-row">
         <div
           className={[
-            "fixed inset-x-0 bottom-0 z-[90] max-h-[72vh] overflow-y-auto rounded-t-[1.8rem] border border-b-0 border-[var(--theme-border)] bg-[color:color-mix(in_srgb,var(--theme-panel)_92%,transparent)] shadow-[0_-24px_80px_rgba(0,0,0,0.38)] transition-transform duration-300 scrollbar-thin scrollbar-track-transparent lg:order-2 lg:static lg:z-auto lg:max-h-none lg:rounded-none lg:border-0 lg:border-l lg:bg-[color:color-mix(in_srgb,var(--theme-panel)_56%,transparent)] lg:shadow-none lg:transition-[width,opacity] lg:duration-300",
+            "theme-player-drawer fixed inset-x-0 bottom-0 z-[90] max-h-[72vh] overflow-y-auto rounded-t-[1.8rem] border border-b-0 border-[var(--theme-border)] transition-transform duration-300 scrollbar-thin scrollbar-track-transparent lg:order-2 lg:static lg:z-auto lg:max-h-none lg:rounded-none lg:border-0 lg:border-l lg:transition-[width,opacity] lg:duration-300",
             isSidebarVisible
               ? "translate-y-0 lg:w-[360px] lg:opacity-100"
               : "translate-y-full lg:w-0 lg:opacity-0 lg:overflow-hidden lg:pointer-events-none",

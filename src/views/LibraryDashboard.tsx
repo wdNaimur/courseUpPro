@@ -192,10 +192,10 @@ export default function LibraryDashboard({
 
             <div className="mt-6 grid gap-6 lg:grid-cols-[220px_minmax(0,1fr)]">
               <div className="space-y-3">
-                <label className="text-[11px] font-bold uppercase tracking-[0.22em] text-white/55">
+                <label className="theme-label-soft text-[11px] font-bold uppercase tracking-[0.22em]">
                   Thumbnail
                 </label>
-                <div className="overflow-hidden rounded-[1.5rem] border border-[var(--theme-border)] bg-black/18">
+                <div className="theme-soft-panel overflow-hidden rounded-[1.5rem]">
                   {thumbnailDraft ? (
                     <img
                       src={thumbnailDraft}
@@ -203,7 +203,7 @@ export default function LibraryDashboard({
                       className="aspect-[4/3] w-full object-cover"
                     />
                   ) : (
-                    <div className="aspect-[4/3] w-full bg-[radial-gradient(circle_at_top_left,_rgba(118,184,168,0.24),_transparent_36%),radial-gradient(circle_at_bottom_right,_rgba(61,141,122,0.2),_transparent_34%),linear-gradient(145deg,_rgba(15,20,19,0.98),_rgba(34,49,44,0.84))]" />
+                    <div className="theme-preview-art aspect-[4/3] w-full" />
                   )}
                 </div>
                 <div className="flex flex-wrap gap-2">
@@ -230,7 +230,7 @@ export default function LibraryDashboard({
               </div>
 
               <div className="space-y-3">
-                <label className="text-[11px] font-bold uppercase tracking-[0.22em] text-white/55">
+                <label className="theme-label-soft text-[11px] font-bold uppercase tracking-[0.22em]">
                   Course title
                 </label>
                 <input
@@ -238,10 +238,10 @@ export default function LibraryDashboard({
                   value={titleDraft}
                   onChange={(event) => setTitleDraft(event.target.value)}
                   placeholder="Course title"
-                  className="w-full rounded-2xl border border-[var(--theme-border)] bg-black/18 px-4 py-3 text-sm font-semibold text-[var(--theme-text)] placeholder:text-[var(--theme-text-faint)] focus:border-[color:color-mix(in_srgb,var(--theme-accent-soft)_35%,transparent)] focus:outline-none focus:ring-4 focus:ring-[color:color-mix(in_srgb,var(--theme-accent-soft)_10%,transparent)]"
+                  className="theme-field w-full rounded-2xl px-4 py-3 text-sm font-semibold"
                 />
 
-                <label className="text-[11px] font-bold uppercase tracking-[0.22em] text-white/55">
+                <label className="theme-label-soft text-[11px] font-bold uppercase tracking-[0.22em]">
                   Priority label
                 </label>
                 <input
@@ -249,7 +249,7 @@ export default function LibraryDashboard({
                   value={priorityDraft}
                   onChange={(event) => setPriorityDraft(event.target.value)}
                   placeholder={DEFAULT_COURSE_PRIORITY}
-                  className="w-full rounded-2xl border border-[var(--theme-border)] bg-black/18 px-4 py-3 text-sm font-semibold text-[var(--theme-text)] placeholder:text-[var(--theme-text-faint)] focus:border-[color:color-mix(in_srgb,var(--theme-accent-soft)_35%,transparent)] focus:outline-none focus:ring-4 focus:ring-[color:color-mix(in_srgb,var(--theme-accent-soft)_10%,transparent)]"
+                  className="theme-field w-full rounded-2xl px-4 py-3 text-sm font-semibold"
                 />
                 <div className="flex flex-wrap gap-2">
                   {["High", "Medium", "Low", "Focus", DEFAULT_COURSE_PRIORITY].map((option) => (
@@ -315,7 +315,7 @@ export default function LibraryDashboard({
               </div>
             </div>
 
-            <div className="grid gap-3 rounded-[1.6rem] border border-[var(--theme-border)] bg-black/18 p-4 lg:min-w-[260px]">
+            <div className="theme-soft-panel grid gap-3 rounded-[1.6rem] p-4 lg:min-w-[260px]">
               <p className="section-label">Dashboard stats</p>
               <p className="text-4xl font-black tracking-[-0.05em] text-[var(--theme-text)]">
                 {courses.length}
@@ -338,11 +338,11 @@ export default function LibraryDashboard({
                 placeholder="Search courses to manage..."
                 value={searchQuery}
                 onChange={(event) => setSearchQuery(event.target.value)}
-                className="w-full rounded-[1.4rem] border border-[var(--theme-border)] bg-black/18 py-4 pl-14 pr-6 text-[var(--theme-text)] placeholder:text-[var(--theme-text-faint)] focus:border-[color:color-mix(in_srgb,var(--theme-accent-soft)_35%,transparent)] focus:outline-none focus:ring-4 focus:ring-[color:color-mix(in_srgb,var(--theme-accent-soft)_10%,transparent)] transition-all"
+                className="theme-field w-full rounded-[1.4rem] py-4 pl-14 pr-6 transition-all"
               />
             </div>
 
-            <div className="rounded-[1.3rem] border border-[var(--theme-border)] bg-black/18 px-4 py-3 text-sm text-[var(--theme-text-soft)]">
+            <div className="theme-soft-panel rounded-[1.3rem] px-4 py-3 text-sm text-[var(--theme-text-soft)]">
               <span className="font-bold text-white">{filteredCourses.length}</span>{" "}
               {filteredCourses.length === 1 ? "course" : "courses"} in view
             </div>
@@ -355,11 +355,11 @@ export default function LibraryDashboard({
               <table className="min-w-full border-collapse">
                 <thead>
                   <tr className="border-b border-[var(--theme-border)] text-left">
-                    <th className="px-5 py-4 text-[11px] font-bold uppercase tracking-[0.22em] text-white/45">Course</th>
-                    <th className="px-5 py-4 text-[11px] font-bold uppercase tracking-[0.22em] text-white/45">Priority</th>
-                    <th className="px-5 py-4 text-[11px] font-bold uppercase tracking-[0.22em] text-white/45">Lessons</th>
-                    <th className="px-5 py-4 text-[11px] font-bold uppercase tracking-[0.22em] text-white/45">Access</th>
-                    <th className="px-5 py-4 text-[11px] font-bold uppercase tracking-[0.22em] text-white/45">Actions</th>
+                    <th className="theme-label-muted px-5 py-4 text-[11px] font-bold uppercase tracking-[0.22em]">Course</th>
+                    <th className="theme-label-muted px-5 py-4 text-[11px] font-bold uppercase tracking-[0.22em]">Priority</th>
+                    <th className="theme-label-muted px-5 py-4 text-[11px] font-bold uppercase tracking-[0.22em]">Lessons</th>
+                    <th className="theme-label-muted px-5 py-4 text-[11px] font-bold uppercase tracking-[0.22em]">Access</th>
+                    <th className="theme-label-muted px-5 py-4 text-[11px] font-bold uppercase tracking-[0.22em]">Actions</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -375,8 +375,8 @@ export default function LibraryDashboard({
                                 className="h-full w-full object-cover"
                               />
                             ) : (
-                              <div className="flex h-full items-end bg-[radial-gradient(circle_at_top_left,_rgba(118,184,168,0.24),_transparent_36%),radial-gradient(circle_at_bottom_right,_rgba(61,141,122,0.2),_transparent_34%),linear-gradient(145deg,_rgba(15,20,19,0.98),_rgba(34,49,44,0.84))] p-2">
-                                <span className="rounded-full border border-white/10 bg-white/6 px-2 py-0.5 text-[9px] font-bold uppercase tracking-[0.18em] text-white/75">
+                              <div className="theme-preview-art flex h-full items-end p-2">
+                                <span className="theme-chip-dark rounded-full px-2 py-0.5 text-[9px] font-bold uppercase tracking-[0.18em]">
                                   {course.priority || DEFAULT_COURSE_PRIORITY}
                                 </span>
                               </div>

@@ -384,7 +384,7 @@ export default function VideoDisplay({
   const navButtonClassName =
     "border border-white/20 bg-white/12 text-white shadow-2xl backdrop-blur-md transition hover:bg-white/18 active:scale-90";
   const primaryNavButtonClassName =
-    "border border-[color:color-mix(in_srgb,var(--theme-accent-soft)_28%,transparent)] bg-[color:color-mix(in_srgb,var(--theme-accent)_90%,transparent)] text-white shadow-2xl shadow-[rgba(61,141,122,0.25)] transition hover:bg-[var(--theme-accent-strong)] active:scale-90";
+    "theme-accent-elevated border text-white shadow-2xl transition active:scale-90";
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -478,8 +478,8 @@ export default function VideoDisplay({
   if (!activeLesson) {
     return (
       <section className="flex min-h-full items-center justify-center p-4 md:p-12">
-        <div className="grid max-w-2xl place-items-center gap-4 rounded-3xl border border-[var(--theme-border)] bg-[color:color-mix(in_srgb,var(--theme-panel)_90%,transparent)] p-12 text-center shadow-2xl shadow-black/20">
-          <div className="rounded-full bg-[color:color-mix(in_srgb,var(--theme-accent)_20%,transparent)] p-6">
+        <div className="theme-panel-surface-soft grid max-w-2xl place-items-center gap-4 rounded-3xl border border-[var(--theme-border)] p-12 text-center">
+          <div className="theme-accent-tint rounded-full p-6">
             <PlayCircle className="h-16 w-16 text-[var(--theme-accent-warm)]" />
           </div>
           <h2 className="text-3xl font-bold text-[var(--theme-text)]">
@@ -581,8 +581,8 @@ export default function VideoDisplay({
                   background: getRangeBackground(
                     Math.min(currentTime, duration || 0),
                     duration || 0,
-                    "rgba(61, 141, 122, 0.95)",
-                    "rgba(143, 131, 120, 0.28)",
+                    "var(--theme-slider-progress)",
+                    "var(--theme-slider-track)",
                   ),
                 }}
                 className="media-slider h-1.5 w-full cursor-pointer appearance-none rounded-full"
@@ -636,8 +636,8 @@ export default function VideoDisplay({
                     background: getRangeBackground(
                       isMuted ? 0 : volume,
                       1,
-                      "rgba(255, 207, 171, 0.92)",
-                      "rgba(143, 131, 120, 0.28)",
+                      "var(--theme-slider-volume)",
+                      "var(--theme-slider-track)",
                     ),
                   }}
                   className="media-slider h-1.5 w-20 cursor-pointer appearance-none rounded-full md:w-28"
@@ -768,7 +768,7 @@ export default function VideoDisplay({
                 </button>
                 <button
                   onClick={handlePlayNextNow}
-                  className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-[var(--theme-accent)] py-4 font-bold text-white transition-all shadow-lg shadow-[rgba(61,141,122,0.2)] hover:bg-[var(--theme-accent-strong)]"
+                  className="theme-primary-shadow flex flex-1 items-center justify-center gap-2 rounded-xl bg-[var(--theme-accent)] py-4 font-bold text-white transition-all hover:bg-[var(--theme-accent-strong)]"
                 >
                   <Play className="h-4 w-4 fill-current" />
                   Play Now
@@ -845,7 +845,7 @@ export default function VideoDisplay({
 
       {/* Lesson Info Card */}
       {!isFullscreen && (
-        <div className="grid gap-6 rounded-3xl border border-[var(--theme-border)] bg-[color:color-mix(in_srgb,var(--theme-panel)_95%,transparent)] p-6 shadow-2xl shadow-black/20 md:p-8">
+        <div className="theme-panel-surface grid gap-6 rounded-3xl border border-[var(--theme-border)] p-6 md:p-8">
           <div className="space-y-4">
             <div className="space-y-2">
               <h2 className="text-2xl font-black leading-tight text-[var(--theme-text)] md:text-3xl">
