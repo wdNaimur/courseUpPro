@@ -1,14 +1,12 @@
 import { Plus, Search } from "lucide-react";
 
 type DashboardToolbarSectionProps = {
-  filteredCount: number;
   searchQuery: string;
   onAddCourse: () => void;
   onSearchQueryChange: (value: string) => void;
 };
 
 export default function DashboardToolbarSection({
-  filteredCount,
   searchQuery,
   onAddCourse,
   onSearchQueryChange,
