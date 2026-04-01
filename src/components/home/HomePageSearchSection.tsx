@@ -1,12 +1,14 @@
-import { Plus, Search } from "lucide-react";
+import { LoaderCircle, Plus, Search } from "lucide-react";
 
 type HomePageSearchSectionProps = {
+  isAddingCourse: boolean;
   searchQuery: string;
   onSearchQueryChange: (value: string) => void;
   onAddCourse: () => void;
 };
 
 export default function HomePageSearchSection({
+  isAddingCourse,
   searchQuery,
   onSearchQueryChange,
   onAddCourse,
@@ -19,10 +21,15 @@ export default function HomePageSearchSection({
         </h1>
         <button
           onClick={onAddCourse}
-          className="glass-button-primary elastic-lift  shrink-0 items-center justify-center gap-2 self-start rounded-full px-6 py-3.5 font-bold text-white lg:self-auto lg:hidden inline-flex"
+          disabled={isAddingCourse}
+          className="glass-button-primary elastic-lift shrink-0 items-center justify-center gap-2 self-start rounded-full px-6 py-3.5 font-bold text-white disabled:cursor-wait disabled:opacity-75 lg:self-auto lg:hidden inline-flex"
         >
-          <Plus className="h-5 w-5" />
-          Add New Course
+          {isAddingCourse ? (
+            <LoaderCircle className="h-5 w-5 animate-spin" />
+          ) : (
+            <Plus className="h-5 w-5" />
+          )}
+          {isAddingCourse ? "Adding Course..." : "Add New Course"}
         </button>
       </div>
 
@@ -42,10 +49,15 @@ export default function HomePageSearchSection({
           </div>
           <button
             onClick={onAddCourse}
-            className="glass-button-primary elastic-lift  shrink-0 items-center justify-center gap-2 self-start rounded-full px-6 py-3.5 font-bold text-white lg:self-auto lg:inline-flex hidden"
+            disabled={isAddingCourse}
+            className="glass-button-primary elastic-lift shrink-0 items-center justify-center gap-2 self-start rounded-full px-6 py-3.5 font-bold text-white disabled:cursor-wait disabled:opacity-75 lg:self-auto lg:inline-flex hidden"
           >
-            <Plus className="h-5 w-5" />
-            Add New Course
+            {isAddingCourse ? (
+              <LoaderCircle className="h-5 w-5 animate-spin" />
+            ) : (
+              <Plus className="h-5 w-5" />
+            )}
+            {isAddingCourse ? "Adding Course..." : "Add New Course"}
           </button>
         </div>
       </div>

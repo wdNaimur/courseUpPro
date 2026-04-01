@@ -13,6 +13,7 @@ import {
 
 type LibraryDashboardProps = {
   courses: CourseMetadata[];
+  isAddingCourse: boolean;
   onBack: () => void;
   onAddCourse: () => void;
   onSaveCourses: (courses: CourseMetadata[]) => void;
@@ -22,6 +23,7 @@ const DEFAULT_COURSE_PRIORITY = "Standard";
 
 export default function LibraryDashboard({
   courses,
+  isAddingCourse,
   onBack,
   onAddCourse,
   onSaveCourses,
@@ -173,6 +175,7 @@ export default function LibraryDashboard({
           courses={filteredCourses}
           coursesCount={courses.length}
           defaultCoursePriority={DEFAULT_COURSE_PRIORITY}
+          isAddingCourse={isAddingCourse}
           onAddCourse={onAddCourse}
           onBack={onBack}
           onDeleteCourse={setCourseIdToDelete}

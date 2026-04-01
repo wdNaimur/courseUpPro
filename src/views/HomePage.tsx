@@ -12,6 +12,7 @@ import { isVideoFile } from "../utils/course-helpers";
 
 type HomePageProps = {
   courses: CourseMetadata[];
+  isAddingCourse: boolean;
   onAddCourse: () => void;
   onSaveCourses: (courses: CourseMetadata[]) => void;
   onCourseSelect: (
@@ -32,6 +33,7 @@ const APP_NAME = "CourseUp";
 
 export default function HomePage({
   courses,
+  isAddingCourse,
   onAddCourse,
   onSaveCourses,
   onCourseSelect,
@@ -121,6 +123,7 @@ export default function HomePage({
       <HomePageContentSections
         appName={APP_NAME}
         filteredCourses={filteredCourses}
+        isAddingCourse={isAddingCourse}
         onAddCourse={onAddCourse}
         onCourseClick={handleCourseClick}
         onOpenDashboard={onOpenDashboard}

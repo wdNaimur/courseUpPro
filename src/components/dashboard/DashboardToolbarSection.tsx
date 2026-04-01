@@ -1,12 +1,14 @@
-import { Plus, Search } from "lucide-react";
+import { LoaderCircle, Plus, Search } from "lucide-react";
 
 type DashboardToolbarSectionProps = {
+  isAddingCourse: boolean;
   searchQuery: string;
   onAddCourse: () => void;
   onSearchQueryChange: (value: string) => void;
 };
 
 export default function DashboardToolbarSection({
+  isAddingCourse,
   searchQuery,
   onAddCourse,
   onSearchQueryChange,
@@ -30,10 +32,15 @@ export default function DashboardToolbarSection({
         <button
           type="button"
           onClick={onAddCourse}
-          className="glass-button-primary inline-flex items-center justify-center gap-2 rounded-full px-5 py-3 text-sm font-bold text-white"
+          disabled={isAddingCourse}
+          className="glass-button-primary inline-flex items-center justify-center gap-2 rounded-full px-5 py-3 text-sm font-bold text-white disabled:cursor-wait disabled:opacity-75"
         >
-          <Plus className="h-4 w-4" />
-          Add New Course
+          {isAddingCourse ? (
+            <LoaderCircle className="h-4 w-4 animate-spin" />
+          ) : (
+            <Plus className="h-4 w-4" />
+          )}
+          {isAddingCourse ? "Adding Course..." : "Add New Course"}
         </button>
       </div>
     </section>

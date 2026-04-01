@@ -1,10 +1,11 @@
-import { FolderOpen, SlidersHorizontal } from "lucide-react";
+import { FolderOpen, LoaderCircle, SlidersHorizontal } from "lucide-react";
 import type { CourseMetadata } from "../../types/course";
 import CourseCard from "./CourseCard";
 
 type HomePageCoursesSectionProps = {
   appName: string;
   filteredCourses: CourseMetadata[];
+  isAddingCourse: boolean;
   onCourseClick: (course: CourseMetadata) => void;
   onAddCourse: () => void;
   onOpenDashboard: () => void;
@@ -13,6 +14,7 @@ type HomePageCoursesSectionProps = {
 export default function HomePageCoursesSection({
   appName,
   filteredCourses,
+  isAddingCourse,
   onCourseClick,
   onAddCourse,
   onOpenDashboard,
@@ -64,9 +66,13 @@ export default function HomePageCoursesSection({
           </p>
           <button
             onClick={onAddCourse}
-            className="glass-button mt-8 rounded-full px-8 py-3 font-semibold text-[var(--theme-text)]"
+            disabled={isAddingCourse}
+            className="glass-button mt-8 inline-flex items-center gap-2 rounded-full px-8 py-3 font-semibold text-[var(--theme-text)] disabled:cursor-wait disabled:opacity-75"
           >
-            Select a folder
+            {isAddingCourse ? (
+              <LoaderCircle className="h-4 w-4 animate-spin" />
+            ) : null}
+            {isAddingCourse ? "Adding Course..." : "Select a folder"}
           </button>
         </div>
       )}
