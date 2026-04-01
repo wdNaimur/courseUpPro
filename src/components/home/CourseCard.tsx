@@ -40,7 +40,7 @@ export default function CourseCard({
 
   return (
     <div
-      className="editorial-panel group relative flex cursor-pointer flex-col overflow-hidden rounded-[2rem] transition-all duration-300 hover:-translate-y-1.5 hover:border-[color:color-mix(in_srgb,var(--theme-accent-soft)_18%,transparent)] hover:shadow-[0_24px_90px_rgba(61,141,122,0.14)]"
+      className="editorial-panel theme-card-hover-accent group relative flex cursor-pointer flex-col overflow-hidden rounded-[2rem] transition-all duration-300 hover:-translate-y-1.5"
       onClick={() => onSelect(course)}
     >
       <div className="relative aspect-[16/10] overflow-hidden bg-[var(--theme-bg)]">
@@ -51,7 +51,7 @@ export default function CourseCard({
             className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110"
           />
         ) : (
-          <div className="h-full w-full bg-[radial-gradient(circle_at_top_left,_rgba(118,184,168,0.24),_transparent_36%),radial-gradient(circle_at_bottom_right,_rgba(61,141,122,0.2),_transparent_34%),linear-gradient(145deg,_rgba(15,20,19,0.98),_rgba(34,49,44,0.84))]" />
+          <div className="theme-preview-art h-full w-full" />
         )}
 
         <div className="absolute inset-x-4 top-4 flex items-start justify-between gap-3">
@@ -62,17 +62,17 @@ export default function CourseCard({
                 event.stopPropagation();
                 onEditPriority(course.id);
               }}
-              className="rounded-full border border-white/10 bg-black/25 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.2em] text-white/75 backdrop-blur-md transition hover:bg-black/40"
+              className="theme-chip-dark theme-chip-dark-interactive rounded-full px-3 py-1 text-[11px] font-bold uppercase tracking-[0.2em]"
             >
               {priorityLabel}
             </button>
           ) : (
-            <span className="rounded-full border border-white/10 bg-black/25 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.2em] text-white/75 backdrop-blur-md">
+            <span className="theme-chip-dark rounded-full px-3 py-1 text-[11px] font-bold uppercase tracking-[0.2em]">
               {priorityLabel}
             </span>
           )}
 
-          <span className="rounded-full border border-white/10 bg-black/25 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.2em] text-white/75 backdrop-blur-md">
+          <span className="theme-chip-dark rounded-full px-3 py-1 text-[11px] font-bold uppercase tracking-[0.2em]">
             {progressRatio}%
           </span>
         </div>
@@ -83,10 +83,10 @@ export default function CourseCard({
           {course.title}
         </h3>
 
-        <div className="mt-4 grid gap-3 rounded-[1.5rem] border border-white/8 bg-white/[0.03] p-4">
+        <div className="theme-soft-panel-strong mt-4 grid gap-3 rounded-[1.5rem] p-4">
           <div className="h-1.5 overflow-hidden rounded-full bg-white/10">
             <div
-              className="h-full rounded-full bg-gradient-to-r from-[var(--theme-accent)] via-[var(--theme-accent-warm)] to-[var(--theme-accent-soft)] transition-all"
+              className="theme-accent-fill h-full rounded-full transition-all"
               style={{ width: `${progressRatio}%` }}
             />
           </div>
@@ -95,21 +95,21 @@ export default function CourseCard({
             <span>{completedCount}/{course.lessonCount} lessons completed</span>
             {completedDurationLabel ? (
               <>
-                <span className="text-white/25">|</span>
+                <span className="theme-divider-faint">|</span>
                 <span>{completedDurationLabel} completed</span>
               </>
             ) : null}
             {durationLabel ? (
               <>
-                <span className="text-white/25">|</span>
+                <span className="theme-divider-faint">|</span>
                 <span>{durationLabel}</span>
               </>
             ) : null}
-            <span className="text-white/25">|</span>
+            <span className="theme-divider-faint">|</span>
             <span>{accessLabel}</span>
           </div>
 
-          <div className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.18em] text-white/50">
+          <div className="theme-text-contrast-faint flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.18em]">
             <Clock3 className="h-3.5 w-3.5 text-[var(--theme-text-faint)]" />
             <span>Opened {lastPlayedLabel}</span>
           </div>

@@ -2,22 +2,59 @@ import { useSyncExternalStore } from "react";
 
 export const appRoutes = {
   home: "/",
-  player: "/player",
+  playerBase: "/player",
   dashboard: "/dashboard",
 } as const;
 
-export type AppRoute = (typeof appRoutes)[keyof typeof appRoutes];
+export type AppRouteName = "home" | "player" | "dashboard";
+
+export type AppRoute = {
+  name: AppRouteName;
+  path: string;
+  courseSlug?: string;
+};
+
+export function slugifyCourseName(courseName: string) {
+  return courseName
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+}
+
+export function buildPlayerRoute(courseName: string) {
+  const slug = slugifyCourseName(courseName);
+  return slug ? `${appRoutes.playerBase}/${slug}` : appRoutes.playerBase;
+}
 
 function normalizeRoute(pathname: string): AppRoute {
-  if (pathname === appRoutes.player) {
-    return appRoutes.player;
+  if (pathname === appRoutes.playerBase) {
+    return {
+      name: "player",
+      path: appRoutes.playerBase,
+    };
+  }
+
+  if (pathname.startsWith(`${appRoutes.playerBase}/`)) {
+    const courseSlug = pathname.slice(appRoutes.playerBase.length + 1);
+    return {
+      name: "player",
+      path: pathname,
+      courseSlug: courseSlug || undefined,
+    };
   }
 
   if (pathname === appRoutes.dashboard) {
-    return appRoutes.dashboard;
+    return {
+      name: "dashboard",
+      path: appRoutes.dashboard,
+    };
   }
 
-  return appRoutes.home;
+  return {
+    name: "home",
+    path: appRoutes.home,
+  };
 }
 
 function notifyRouteChange() {
@@ -26,14 +63,14 @@ function notifyRouteChange() {
 
 export function navigateTo(route: AppRoute, options?: { replace?: boolean }) {
   const currentRoute = normalizeRoute(window.location.pathname);
-  if (currentRoute === route) {
+  if (currentRoute.path === route.path) {
     return;
   }
 
   if (options?.replace) {
-    window.history.replaceState(null, "", route);
+    window.history.replaceState(null, "", route.path);
   } else {
-    window.history.pushState(null, "", route);
+    window.history.pushState(null, "", route.path);
   }
 
   notifyRouteChange();
@@ -51,10 +88,26 @@ function subscribe(onStoreChange: () => void) {
   };
 }
 
+let cachedPathname = "";
+let cachedRoute: AppRoute = {
+  name: "home",
+  path: appRoutes.home,
+};
+
 function getSnapshot() {
-  return normalizeRoute(window.location.pathname);
+  const pathname = window.location.pathname;
+  if (pathname === cachedPathname) {
+    return cachedRoute;
+  }
+
+  cachedPathname = pathname;
+  cachedRoute = normalizeRoute(pathname);
+  return cachedRoute;
 }
 
 export function useAppRoute() {
-  return useSyncExternalStore(subscribe, getSnapshot, () => appRoutes.home);
+  return useSyncExternalStore(subscribe, getSnapshot, (): AppRoute => ({
+    name: "home",
+    path: appRoutes.home,
+  }));
 }

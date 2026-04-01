@@ -27,16 +27,16 @@ export default function LessonItem({
       className={[
         "group flex w-full min-w-0 items-center gap-3 rounded-2xl border p-2.5 transition-all cursor-pointer select-none backdrop-blur-md",
         isActive
-          ? "border-[color:color-mix(in_srgb,var(--theme-accent-soft)_24%,transparent)] bg-[color:color-mix(in_srgb,var(--theme-accent)_18%,transparent)] shadow-[0_18px_40px_rgba(215,96,59,0.18)]"
-          : "border-[var(--theme-border)] bg-white/6 hover:border-[var(--theme-border-strong)] hover:bg-white/10",
+          ? "theme-active-surface"
+          : "theme-soft-panel-hover",
       ].join(" ")}
     >
       <div
         className={[
           "flex h-8 w-8 shrink-0 items-center justify-center rounded-xl border transition-all",
           isActive
-            ? "border-[color:color-mix(in_srgb,var(--theme-accent-soft)_34%,transparent)] bg-[var(--theme-accent)] text-white"
-            : "border-[var(--theme-border)] bg-black/20 text-[var(--theme-text-faint)]",
+            ? "theme-active-icon"
+            : "theme-inactive-icon",
         ].join(" ")}
       >
         {isActive ? (

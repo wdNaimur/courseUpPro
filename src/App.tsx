@@ -1,9 +1,19 @@
 import { useEffect, useRef, useState } from "react";
 import LocalCoursePlayer from "./components/LocalCoursePlayer";
+import HomePageCoursePickerInput from "./components/home/HomePageCoursePickerInput";
+import HomePageDialogLayer, {
+  type PendingCourseImport,
+} from "./components/home/HomePageDialogLayer";
 import HomePage from "./views/HomePage";
 import LibraryDashboard from "./views/LibraryDashboard";
 import type { CourseMetadata } from "./types/course";
-import { appRoutes, navigateTo, useAppRoute } from "./router";
+import {
+  appRoutes,
+  buildPlayerRoute,
+  navigateTo,
+  slugifyCourseName,
+  useAppRoute,
+} from "./router";
 import { isVideoFile } from "./utils/course-helpers";
 import { db } from "./utils/db";
 import {
@@ -11,7 +21,18 @@ import {
   readVideoDurations,
   type LessonDurationMap,
 } from "./utils/duration";
-import { scanDirectory, verifyPermission } from "./utils/file-system";
+import {
+  readHandleFileText,
+  scanDirectory,
+  verifyPermission,
+  verifyReadWritePermission,
+  writeHandleTextFile,
+} from "./utils/file-system";
+import {
+  buildCourseKey,
+  getCourseFolderName,
+  getRelativePath,
+} from "./utils/course-helpers";
 
 const DEFAULT_COURSE_PRIORITY = "Standard";
 const APP_ACTIVE_COURSE_KEY = "local-course-player::active-course-id";
@@ -126,6 +147,7 @@ function PlayerShellSkeleton() {
 
 export default function App() {
   const route = useAppRoute();
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [selectedLessonDurations, setSelectedLessonDurations] =
     useState<LessonDurationMap>({});
@@ -133,7 +155,8 @@ export default function App() {
     Record<string, { files: File[]; lessonDurations?: LessonDurationMap }>
   >({});
   const [isRestoringPlayer, setIsRestoringPlayer] = useState(() => {
-    return window.location.pathname === appRoutes.player;
+    return window.location.pathname === appRoutes.playerBase ||
+      window.location.pathname.startsWith(`${appRoutes.playerBase}/`);
   });
   const [courses, setCourses] = useState<CourseMetadata[]>(() => {
     const saved = localStorage.getItem("local-course-player::courses");
@@ -150,6 +173,20 @@ export default function App() {
     return [];
   });
   const durationJobsRef = useRef(new Set<string>());
+  const [priorityDraft, setPriorityDraft] = useState(DEFAULT_COURSE_PRIORITY);
+  const [pendingCourseImport, setPendingCourseImport] =
+    useState<PendingCourseImport | null>(null);
+
+  const getPlayerCourseFromSlug = (courseSlug?: string) => {
+    if (!courseSlug) {
+      return null;
+    }
+
+    return (
+      courses.find((course) => slugifyCourseName(course.title) === courseSlug) ??
+      null
+    );
+  };
 
   const persistNormalizedCourses = (nextCourses: CourseMetadata[]) => {
     const normalizedCourses = nextCourses.map((course) =>
@@ -160,6 +197,11 @@ export default function App() {
       "local-course-player::courses",
       JSON.stringify(normalizedCourses),
     );
+  };
+
+  const closePriorityDialog = () => {
+    setPendingCourseImport(null);
+    setPriorityDraft(DEFAULT_COURSE_PRIORITY);
   };
 
   const primeCourseDurations = (courseId: string, files: File[]) => {
@@ -209,60 +251,71 @@ export default function App() {
 
   useEffect(() => {
     const restorePlayerView = async () => {
-      if (route !== appRoutes.player) {
+      if (route.name !== "player") {
         setIsRestoringPlayer(false);
         return;
       }
 
-      if (selectedFiles.length > 0) {
+      const routedCourse = getPlayerCourseFromSlug(route.courseSlug);
+      const targetCourseId =
+        routedCourse?.id ?? localStorage.getItem(APP_ACTIVE_COURSE_KEY);
+
+      if (!targetCourseId) {
+        navigateTo({ name: "home", path: appRoutes.home }, { replace: true });
         setIsRestoringPlayer(false);
         return;
       }
 
-      const activeCourseId = localStorage.getItem(APP_ACTIVE_COURSE_KEY);
-      if (!activeCourseId) {
-        navigateTo(appRoutes.home, { replace: true });
+      if (
+        selectedFiles.length > 0 &&
+        localStorage.getItem(APP_ACTIVE_COURSE_KEY) === targetCourseId
+      ) {
         setIsRestoringPlayer(false);
         return;
       }
 
-      const activeCourse = courses.find((course) => course.id === activeCourseId);
+      const activeCourse = courses.find((course) => course.id === targetCourseId);
       if (!activeCourse?.hasHandle) {
-        navigateTo(appRoutes.home, { replace: true });
+        navigateTo({ name: "home", path: appRoutes.home }, { replace: true });
         setIsRestoringPlayer(false);
         return;
       }
 
       try {
-        const handle = await db.getHandle(activeCourseId);
+        const handle = await db.getHandle(targetCourseId);
         if (!handle) {
-          navigateTo(appRoutes.home, { replace: true });
+          navigateTo({ name: "home", path: appRoutes.home }, { replace: true });
           return;
         }
 
         const hasPermission = await verifyPermission(handle);
         if (!hasPermission) {
-          navigateTo(appRoutes.home, { replace: true });
+          navigateTo({ name: "home", path: appRoutes.home }, { replace: true });
           return;
         }
 
         const allFiles = await scanDirectory(handle, handle.name);
         const videoFiles = allFiles.filter(isVideoFile);
         if (!videoFiles.length) {
-          navigateTo(appRoutes.home, { replace: true });
+          navigateTo({ name: "home", path: appRoutes.home }, { replace: true });
           return;
         }
 
         setCourseFilesCache((previousState) => ({
           ...previousState,
-          [activeCourseId]: { files: videoFiles },
+          [targetCourseId]: { files: videoFiles },
         }));
         setSelectedFiles(videoFiles);
         setSelectedLessonDurations({});
-        primeCourseDurations(activeCourseId, videoFiles);
+        localStorage.setItem(APP_ACTIVE_COURSE_KEY, targetCourseId);
+        navigateTo(
+          { name: "player", path: buildPlayerRoute(activeCourse.title), courseSlug: slugifyCourseName(activeCourse.title) },
+          { replace: true },
+        );
+        primeCourseDurations(targetCourseId, videoFiles);
       } catch (error) {
         console.error("Failed to restore player view", error);
-        navigateTo(appRoutes.home, { replace: true });
+        navigateTo({ name: "home", path: appRoutes.home }, { replace: true });
       } finally {
         setIsRestoringPlayer(false);
       }
@@ -287,18 +340,231 @@ export default function App() {
     setSelectedFiles(files);
     setSelectedLessonDurations(lessonDurations ?? {});
     localStorage.setItem(APP_ACTIVE_COURSE_KEY, metadata.id);
-    navigateTo(appRoutes.player);
+    navigateTo({
+      name: "player",
+      path: buildPlayerRoute(metadata.title),
+      courseSlug: slugifyCourseName(metadata.title),
+    });
 
     if (!lessonDurations) {
       primeCourseDurations(metadata.id, files);
     }
   };
 
+  const handleConfirmPriority = () => {
+    const normalizedPriority = priorityDraft.trim() || DEFAULT_COURSE_PRIORITY;
+
+    if (!pendingCourseImport) {
+      return;
+    }
+
+    const newCourse: CourseMetadata = {
+      id: pendingCourseImport.courseKey,
+      title: pendingCourseImport.folderName,
+      thumbnail: pendingCourseImport.thumbnail,
+      priority: normalizedPriority,
+      path: pendingCourseImport.path,
+      lastPlayedAt: Date.now(),
+      lessonCount: pendingCourseImport.lessonCount,
+      totalDuration:
+        pendingCourseImport.totalDuration > 0
+          ? pendingCourseImport.totalDuration
+          : undefined,
+      hasHandle: pendingCourseImport.hasHandle,
+    };
+
+    const existingIndex = courses.findIndex(
+      (course) => course.id === newCourse.id,
+    );
+    const updatedCourses =
+      existingIndex > -1
+        ? courses.map((course, index) =>
+            index === existingIndex ? newCourse : course,
+          )
+        : [newCourse, ...courses];
+
+    closePriorityDialog();
+    saveCourses(updatedCourses);
+    handleCourseSelect(
+      newCourse,
+      pendingCourseImport.videoFiles,
+      pendingCourseImport.lessonDurations,
+    );
+
+    if (!pendingCourseImport.lessonDurations) {
+      primeCourseDurations(
+        pendingCourseImport.courseKey,
+        pendingCourseImport.videoFiles,
+      );
+    }
+
+    if (pendingCourseImport.handle) {
+      const courseHandle = pendingCourseImport.handle;
+      void verifyReadWritePermission(pendingCourseImport.handle)
+        .then((hasPermission) => {
+          if (!hasPermission) {
+            return;
+          }
+
+          return writeHandleTextFile(
+            courseHandle,
+            "priority.txt",
+            normalizedPriority,
+          );
+        })
+        .catch((error) => {
+          console.error("Failed to persist course priority file", error);
+        });
+    }
+  };
+
+  const processAndSelectCourse = async (
+    videoFiles: File[],
+    allFiles: File[],
+    handle?: FileSystemDirectoryHandle,
+  ) => {
+    const folderName = getCourseFolderName(videoFiles);
+
+    const mappedLessons = videoFiles
+      .map((file) => ({
+        id: getRelativePath(file),
+        path: getRelativePath(file),
+      }))
+      .sort((a, b) =>
+        a.path.localeCompare(b.path, undefined, {
+          numeric: true,
+          sensitivity: "base",
+        }),
+      );
+
+    const courseKey = buildCourseKey(
+      folderName,
+      mappedLessons as unknown as Parameters<typeof buildCourseKey>[1],
+    );
+
+    let thumbnailBase64 = "";
+    const thumbnailFile = allFiles.find(
+      (file) => file.name.toLowerCase() === "thumbnail.png",
+    );
+    if (thumbnailFile) {
+      thumbnailBase64 = await new Promise((resolve) => {
+        const reader = new FileReader();
+        reader.onloadend = () => resolve(reader.result as string);
+        reader.readAsDataURL(thumbnailFile);
+      });
+    }
+
+    let nextPriority = DEFAULT_COURSE_PRIORITY;
+    const priorityFile = allFiles.find(
+      (file) => file.name.toLowerCase() === "priority.txt",
+    );
+    if (priorityFile) {
+      nextPriority = await priorityFile
+        .text()
+        .then((text) => text.trim() || DEFAULT_COURSE_PRIORITY)
+        .catch(() => DEFAULT_COURSE_PRIORITY);
+    }
+
+    let courseTitle = folderName;
+    const courseConfigFile = allFiles.find(
+      (file) => file.name.toLowerCase() === "course.json",
+    );
+    if (courseConfigFile) {
+      courseTitle = await courseConfigFile
+        .text()
+        .then((text) => {
+          const parsed = JSON.parse(text) as { title?: string };
+          return parsed.title?.trim() || folderName;
+        })
+        .catch(() => folderName);
+    } else if (handle) {
+      const courseConfigText = await readHandleFileText(handle, "course.json");
+      if (courseConfigText) {
+        courseTitle = JSON.parse(courseConfigText).title?.trim() || folderName;
+      }
+    }
+
+    if (handle) {
+      await db.saveHandle(courseKey, handle);
+    }
+
+    setPriorityDraft(nextPriority);
+    setPendingCourseImport({
+      courseKey,
+      folderName: courseTitle,
+      thumbnail: thumbnailBase64,
+      path: videoFiles[0].webkitRelativePath?.split("/")[0] || folderName,
+      lessonCount: videoFiles.length,
+      totalDuration: 0,
+      hasHandle: Boolean(handle),
+      videoFiles,
+      handle,
+    });
+
+    void readVideoDurations(videoFiles).then((durations) => {
+      const totalDuration = durations.reduce(
+        (sum, duration) => sum + duration,
+        0,
+      );
+      const lessonDurations = createLessonDurationMap(videoFiles, durations);
+
+      setPendingCourseImport((current) =>
+        current?.courseKey === courseKey
+          ? {
+              ...current,
+              totalDuration,
+              lessonDurations,
+            }
+          : current,
+      );
+    });
+  };
+
+  const handleAddCourse = async () => {
+    if ("showDirectoryPicker" in window) {
+      try {
+        // @ts-expect-error File System Access API
+        const handle = await window.showDirectoryPicker();
+        const allFiles = await scanDirectory(handle, handle.name);
+        const videoFiles = allFiles.filter(isVideoFile);
+
+        if (videoFiles.length === 0) {
+          window.alert("No video files found in selected folder.");
+          return;
+        }
+
+        await processAndSelectCourse(videoFiles, allFiles, handle);
+      } catch (err) {
+        if (err instanceof Error && err.name !== "AbortError") {
+          console.error(err);
+          fileInputRef.current?.click();
+        }
+      }
+    } else {
+      fileInputRef.current?.click();
+    }
+  };
+
+  const handleLegacyFolderPick = async (
+    event: React.ChangeEvent<HTMLInputElement>,
+  ) => {
+    const selectedFilesList = Array.from(event.target.files || []);
+    const videoFiles = selectedFilesList.filter(isVideoFile);
+
+    if (!videoFiles.length) {
+      window.alert("No video files were found in the selected folder.");
+      return;
+    }
+
+    await processAndSelectCourse(videoFiles, selectedFilesList);
+    event.target.value = "";
+  };
+
   const handleBackToHome = () => {
     localStorage.removeItem(APP_ACTIVE_COURSE_KEY);
     setSelectedFiles([]);
     setSelectedLessonDurations({});
-    navigateTo(appRoutes.home);
+    navigateTo({ name: "home", path: appRoutes.home });
   };
 
   const handlePlayFromCache = (courseId: string) => {
@@ -307,7 +573,12 @@ export default function App() {
       setSelectedFiles(cachedCourse.files);
       setSelectedLessonDurations(cachedCourse.lessonDurations ?? {});
       localStorage.setItem(APP_ACTIVE_COURSE_KEY, courseId);
-      navigateTo(appRoutes.player);
+      const course = courses.find((entry) => entry.id === courseId);
+      navigateTo({
+        name: "player",
+        path: buildPlayerRoute(course?.title ?? courseId),
+        courseSlug: slugifyCourseName(course?.title ?? courseId),
+      });
       if (!cachedCourse.lessonDurations) {
         primeCourseDurations(courseId, cachedCourse.files);
       }
@@ -316,39 +587,53 @@ export default function App() {
     return false;
   };
 
-  if (route === appRoutes.player) {
-    if (isRestoringPlayer) {
-      return <PlayerShellSkeleton />;
-    }
-
-    return (
-      <LocalCoursePlayer
-        initialFiles={selectedFiles}
-        initialLessonDurations={selectedLessonDurations}
-        onBack={handleBackToHome}
-      />
-    );
-  }
-
-  if (route === appRoutes.dashboard) {
-    return (
-      <LibraryDashboard
-        courses={courses}
-        onBack={() => navigateTo(appRoutes.home)}
-        onSaveCourses={saveCourses}
-      />
-    );
-  }
-
   return (
-    <HomePage
-      courses={courses}
-      onSaveCourses={saveCourses}
-      onCourseSelect={handleCourseSelect}
-      filesCache={courseFilesCache}
-      onPlayFromCache={handlePlayFromCache}
-      onPrimeCourseDurations={primeCourseDurations}
-      onOpenDashboard={() => navigateTo(appRoutes.dashboard)}
-    />
+    <>
+      <HomePageDialogLayer
+        defaultCoursePriority={DEFAULT_COURSE_PRIORITY}
+        pendingCourseImport={pendingCourseImport}
+        priorityDraft={priorityDraft}
+        onClosePriorityDialog={closePriorityDialog}
+        onConfirmPriority={handleConfirmPriority}
+        onPriorityDraftChange={setPriorityDraft}
+      />
+
+      <HomePageCoursePickerInput
+        inputRef={fileInputRef}
+        onChange={handleLegacyFolderPick}
+      />
+
+      {route.name === "player" ? (
+        isRestoringPlayer ? (
+          <PlayerShellSkeleton />
+        ) : (
+          <LocalCoursePlayer
+            initialFiles={selectedFiles}
+            initialLessonDurations={selectedLessonDurations}
+            onBack={handleBackToHome}
+          />
+        )
+      ) : route.name === "dashboard" ? (
+        <LibraryDashboard
+          courses={courses}
+          onBack={() => navigateTo({ name: "home", path: appRoutes.home })}
+          onAddCourse={handleAddCourse}
+          onSaveCourses={saveCourses}
+        />
+      ) : (
+        <HomePage
+          courses={courses}
+          onAddCourse={handleAddCourse}
+          onSaveCourses={saveCourses}
+          onCourseSelect={handleCourseSelect}
+          filesCache={courseFilesCache}
+          onPlayFromCache={handlePlayFromCache}
+          onPrimeCourseDurations={primeCourseDurations}
+          onOpenDashboard={() =>
+            navigateTo({ name: "dashboard", path: appRoutes.dashboard })
+          }
+        />
+      )}
+    </>
   );
 }

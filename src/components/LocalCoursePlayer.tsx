@@ -1,5 +1,4 @@
 import { useEffect, useMemo, useRef, useState, useCallback } from "react";
-import { ArrowLeft, Menu, X } from "lucide-react";
 import type { LessonVideo } from "../types/course";
 import {
   buildCourseKey,
@@ -26,6 +25,9 @@ import {
 } from "../utils/course-progress";
 import type { LessonDurationMap } from "../utils/duration";
 import CourseSidebar from "./player/CourseSidebar";
+import PlayerHeader from "./player/PlayerHeader";
+import PlayerLoadingShell from "./player/PlayerLoadingShell";
+import PlayerSidebarLayout from "./player/PlayerSidebarLayout";
 import VideoDisplay from "./player/VideoDisplay";
 
 type LocalCoursePlayerProps = {
@@ -445,190 +447,43 @@ export default function LocalCoursePlayer({
   }, [initialLessonDurations]);
 
   if (isLoadingCourse) {
-    return (
-      <div className="flex h-screen flex-col overflow-hidden bg-[linear-gradient(180deg,var(--theme-bg)_0%,var(--theme-bg)_50%,var(--theme-bg-alt)_100%)] text-[var(--theme-text)]">
-        <header className="z-20 shrink-0 border-b border-[var(--theme-border)] bg-[color:color-mix(in_srgb,var(--theme-bg)_90%,transparent)] backdrop-blur">
-          <div className="flex h-16 items-center justify-between px-4 md:px-6">
-            <div className="flex items-center gap-4">
-              <div className="skeleton-block h-10 w-10 rounded-2xl" />
-              <div className="h-6 w-px bg-[var(--theme-border)]" />
-              <div className="hidden md:block skeleton-block h-3.5 w-40" />
-            </div>
-            {onBack ? (
-              <div className="skeleton-block h-10 w-36 rounded-2xl" />
-            ) : (
-              <div />
-            )}
-          </div>
-        </header>
-
-        <main className="flex flex-1 overflow-hidden">
-          <aside className="h-full w-[360px] shrink-0 overflow-hidden border-r border-[var(--theme-border)] bg-[color:color-mix(in_srgb,var(--theme-panel)_56%,transparent)] p-2">
-            <div className="glass-panel flex h-full flex-col rounded-3xl p-5">
-              <div className="space-y-3">
-                <div className="skeleton-block h-5 w-32" />
-                <div className="skeleton-block h-3.5 w-48" />
-              </div>
-
-              <div className="mt-6 space-y-2.5">
-                <div className="flex items-center justify-between gap-3">
-                  <div className="skeleton-block h-3 w-24" />
-                  <div className="skeleton-block h-3 w-14" />
-                </div>
-                <div className="skeleton-block h-3 w-28" />
-                <div className="skeleton-block h-1.5 w-full rounded-full" />
-              </div>
-
-              <div className="mt-6 flex-1 space-y-3">
-                <div className="skeleton-block h-[74px] w-full rounded-2xl" />
-                <div className="skeleton-block h-[74px] w-full rounded-2xl" />
-                <div className="skeleton-block h-[74px] w-[92%] rounded-2xl" />
-                <div className="skeleton-block h-[74px] w-full rounded-2xl" />
-                <div className="skeleton-block h-[74px] w-[85%] rounded-2xl" />
-              </div>
-            </div>
-          </aside>
-
-          <div className="h-full flex-1 overflow-hidden p-2">
-            <section className="flex h-full flex-col gap-2">
-              <div className="group relative overflow-hidden rounded-3xl border border-[var(--theme-border)] bg-black shadow-2xl shadow-black/40">
-                <div className="aspect-video w-full bg-black p-4 md:p-5">
-                  <div className="flex h-full flex-col justify-between rounded-[1.75rem] border border-[var(--theme-border)] bg-[linear-gradient(180deg,rgba(255,255,255,0.03),rgba(255,255,255,0.01))] p-4 md:p-6">
-                    <div className="space-y-3">
-                      <div className="skeleton-block h-6 w-1/3" />
-                      <div className="skeleton-block h-4 w-2/3" />
-                    </div>
-
-                    <div className="space-y-4">
-                      <div className="skeleton-block h-1.5 w-full rounded-full" />
-                      <div className="flex items-center justify-between gap-3 text-white">
-                        <div className="flex items-center gap-2">
-                          <div className="skeleton-block h-9 w-9 rounded-full" />
-                          <div className="skeleton-block h-4 w-28" />
-                          <div className="skeleton-block h-9 w-9 rounded-full" />
-                          <div className="skeleton-block h-1.5 w-20 rounded-full md:w-28" />
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <div className="skeleton-block h-9 w-20 rounded-full" />
-                          <div className="skeleton-block h-9 w-9 rounded-full" />
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <div className="grid gap-6 rounded-3xl border border-[var(--theme-border)] bg-[color:color-mix(in_srgb,var(--theme-panel)_95%,transparent)] p-6 shadow-2xl shadow-black/20 md:p-8">
-                <div className="space-y-4">
-                  <div className="space-y-2">
-                    <div className="skeleton-block h-7 w-2/3" />
-                    <div className="flex items-center gap-2">
-                      <div className="skeleton-block h-7 w-28 rounded-full" />
-                      <div className="skeleton-block h-3 w-2" />
-                      <div className="skeleton-block h-4 w-40" />
-                    </div>
-                  </div>
-                </div>
-
-                <div className="border-t border-[var(--theme-border)] pt-6">
-                  <div className="skeleton-block mb-3 h-3.5 w-20" />
-                  <div className="space-y-2">
-                    <div className="skeleton-block h-4 w-full rounded-lg" />
-                    <div className="skeleton-block h-4 w-5/6 rounded-lg" />
-                  </div>
-                </div>
-              </div>
-            </section>
-          </div>
-        </main>
-      </div>
-    );
+    return <PlayerLoadingShell showBackButton={Boolean(onBack)} />;
   }
 
   return (
     <div className="flex h-screen flex-col overflow-hidden bg-[linear-gradient(180deg,var(--theme-bg)_0%,var(--theme-bg)_50%,var(--theme-bg-alt)_100%)] text-[var(--theme-text)]">
-      {isSidebarVisible && (
-        <div
-          className="fixed inset-0 z-[80] bg-[var(--theme-overlay)]/70 lg:hidden"
-          onClick={(event) => {
-            event.stopPropagation();
-            setIsSidebarVisible(false);
-          }}
-        />
-      )}
+      <PlayerHeader
+        courseTitle={courseTitle}
+        isSidebarVisible={isSidebarVisible}
+        onBack={onBack}
+        onToggleSidebar={() =>
+          setIsSidebarVisible((previousState) => !previousState)
+        }
+      />
 
-      <header className="z-20 shrink-0 border-b border-[var(--theme-border)] bg-[color:color-mix(in_srgb,var(--theme-bg)_90%,transparent)] backdrop-blur">
-        <div className="flex h-16 items-center justify-between px-4 md:px-6">
-          <div className="flex items-center gap-4">
-            {onBack && (
-              <button
-                onClick={onBack}
-                className="glass-button flex items-center gap-2 rounded-2xl px-4 py-2 text-sm font-bold text-[var(--theme-text)]"
-              >
-                <ArrowLeft className="h-4 w-4 text-[var(--theme-accent-soft)]" />
-                Back to Courses
-              </button>
-            )}
-            <div className="h-6 w-px bg-[var(--theme-border)]"></div>
-            <p className="hidden max-w-[300px] text-xs font-bold uppercase tracking-wider text-[var(--theme-text-faint)] md:block">
-              {courseTitle}
-            </p>
-          </div>
-
-          <button
-            onClick={() => setIsSidebarVisible((previousState) => !previousState)}
-            className="glass-button flex h-10 w-10 items-center justify-center rounded-2xl text-[var(--theme-text)]"
-            aria-pressed={isSidebarVisible}
-            aria-label={isSidebarVisible ? "Hide course sidebar" : "Show course sidebar"}
-            title={isSidebarVisible ? "Hide course sidebar" : "Show course sidebar"}
-          >
-            {isSidebarVisible ? (
-              <X className="h-4 w-4 text-[var(--theme-accent-soft)]" />
-            ) : (
-              <Menu className="h-4 w-4 text-[var(--theme-accent-soft)]" />
-            )}
-          </button>
-        </div>
-      </header>
-
-      <main className="relative flex flex-1 overflow-hidden lg:flex-row">
-        <div
-          className={[
-            "fixed inset-x-0 bottom-0 z-[90] max-h-[72vh] overflow-y-auto rounded-t-[1.8rem] border border-b-0 border-[var(--theme-border)] bg-[color:color-mix(in_srgb,var(--theme-panel)_92%,transparent)] shadow-[0_-24px_80px_rgba(0,0,0,0.38)] transition-transform duration-300 scrollbar-thin scrollbar-track-transparent lg:order-2 lg:static lg:z-auto lg:max-h-none lg:rounded-none lg:border-0 lg:border-l lg:bg-[color:color-mix(in_srgb,var(--theme-panel)_56%,transparent)] lg:shadow-none lg:transition-[width,opacity] lg:duration-300",
-            isSidebarVisible
-              ? "translate-y-0 lg:w-[360px] lg:opacity-100"
-              : "translate-y-full lg:w-0 lg:opacity-0 lg:overflow-hidden lg:pointer-events-none",
-          ].join(" ")}
-          onClick={(event) => event.stopPropagation()}
-        >
-          <div className="mx-auto mt-3 h-1.5 w-16 rounded-full bg-white/15 lg:hidden" />
-          <div className="lg:h-full lg:w-[360px]">
-            <CourseSidebar
-              courseTitle={courseTitle}
-              courseSubtitle={courseSubtitle}
-              completedCount={completedCount}
-              completedDuration={completedDuration}
-              totalLessons={lessonVideos.length}
-              progressPercent={progressPercent}
-              totalDuration={totalDuration}
-              folderTree={folderTree}
-              activeLessonId={activeLessonId}
-              getAccordionOpen={getAccordionOpen}
-              setAccordionOpen={handleAccordionOpen}
-              getLessonCompletion={getLessonCompletion}
-              onSelectLesson={handleSelectLesson}
-              onToggleComplete={handleToggleComplete}
-              formatLessonMeta={formatLessonMeta}
-            />
-          </div>
-        </div>
-
-        <div
-          className={[
-            "min-h-0 flex-1 overflow-y-auto scrollbar-thin scrollbar-track-transparent lg:order-1",
-            isSidebarVisible ? "pointer-events-none lg:pointer-events-auto" : "",
-          ].join(" ")}
-        >
+      <PlayerSidebarLayout
+        isSidebarVisible={isSidebarVisible}
+        onCloseSidebar={() => setIsSidebarVisible(false)}
+        sidebar={
+          <CourseSidebar
+            courseTitle={courseTitle}
+            courseSubtitle={courseSubtitle}
+            completedCount={completedCount}
+            completedDuration={completedDuration}
+            totalLessons={lessonVideos.length}
+            progressPercent={progressPercent}
+            totalDuration={totalDuration}
+            folderTree={folderTree}
+            activeLessonId={activeLessonId}
+            getAccordionOpen={getAccordionOpen}
+            setAccordionOpen={handleAccordionOpen}
+            getLessonCompletion={getLessonCompletion}
+            onSelectLesson={handleSelectLesson}
+            onToggleComplete={handleToggleComplete}
+            formatLessonMeta={formatLessonMeta}
+          />
+        }
+        content={
           <VideoDisplay
             activeLesson={activeLesson}
             courseTitle={courseTitle}
@@ -643,8 +498,8 @@ export default function LocalCoursePlayer({
             playbackSpeed={playbackSpeed}
             onPlaybackSpeedChange={setPlaybackSpeed}
           />
-        </div>
-      </main>
+        }
+      />
     </div>
   );
 }
