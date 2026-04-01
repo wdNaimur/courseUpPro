@@ -41,7 +41,7 @@ export default function CourseSidebar({
   const completedDurationLabel = formatDurationCompact(completedDuration);
 
   return (
-    <aside className="flex min-h-0 flex-col border-[var(--theme-border)] bg-[color:color-mix(in_srgb,var(--theme-panel)_56%,transparent)] lg:border-r">
+    <aside className="theme-sidebar-shell flex min-h-0 flex-col border-[var(--theme-border)] lg:border-r">
       <div className="glass-panel m-2 mb-0 flex flex-col gap-4 rounded-3xl p-5">
         <div>
           <h2 className="text-[17px] font-black leading-tight text-[var(--theme-text)]">
@@ -63,7 +63,7 @@ export default function CourseSidebar({
           </div>
           <div className="h-1.5 overflow-hidden rounded-full bg-[var(--theme-bg)]">
             <div
-              className="h-full rounded-full bg-[var(--theme-accent)] transition-all duration-500 shadow-[0_0_8px_rgba(215,96,59,0.36)]"
+              className="theme-accent-progress h-full rounded-full transition-all duration-500"
               style={{ width: `${progressPercent}%` }}
             />
           </div>
