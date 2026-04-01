@@ -8,6 +8,7 @@ import HomePageWorkflowSection from "./HomePageWorkflowSection";
 type HomePageContentSectionsProps = {
   appName: string;
   filteredCourses: CourseMetadata[];
+  isAddingCourse: boolean;
   onAddCourse: () => void;
   onCourseClick: (course: CourseMetadata) => void | Promise<void>;
   onOpenDashboard: () => void;
@@ -18,6 +19,7 @@ type HomePageContentSectionsProps = {
 export default function HomePageContentSections({
   appName,
   filteredCourses,
+  isAddingCourse,
   onAddCourse,
   onCourseClick,
   onOpenDashboard,
@@ -27,6 +29,7 @@ export default function HomePageContentSections({
   return (
     <>
       <HomePageSearchSection
+        isAddingCourse={isAddingCourse}
         searchQuery={searchQuery}
         onSearchQueryChange={onSearchQueryChange}
         onAddCourse={onAddCourse}
@@ -34,6 +37,7 @@ export default function HomePageContentSections({
       <HomePageCoursesSection
         appName={appName}
         filteredCourses={filteredCourses}
+        isAddingCourse={isAddingCourse}
         onCourseClick={onCourseClick}
         onAddCourse={onAddCourse}
         onOpenDashboard={onOpenDashboard}

@@ -176,6 +176,7 @@ export default function App() {
   const [priorityDraft, setPriorityDraft] = useState(DEFAULT_COURSE_PRIORITY);
   const [pendingCourseImport, setPendingCourseImport] =
     useState<PendingCourseImport | null>(null);
+  const [isAddingCourse, setIsAddingCourse] = useState(false);
 
   const getPlayerCourseFromSlug = (courseSlug?: string) => {
     if (!courseSlug) {
@@ -522,6 +523,7 @@ export default function App() {
 
   const handleAddCourse = async () => {
     if ("showDirectoryPicker" in window) {
+      setIsAddingCourse(true);
       try {
         // @ts-expect-error File System Access API
         const handle = await window.showDirectoryPicker();
@@ -539,6 +541,8 @@ export default function App() {
           console.error(err);
           fileInputRef.current?.click();
         }
+      } finally {
+        setIsAddingCourse(false);
       }
     } else {
       fileInputRef.current?.click();
@@ -549,15 +553,25 @@ export default function App() {
     event: React.ChangeEvent<HTMLInputElement>,
   ) => {
     const selectedFilesList = Array.from(event.target.files || []);
-    const videoFiles = selectedFilesList.filter(isVideoFile);
-
-    if (!videoFiles.length) {
-      window.alert("No video files were found in the selected folder.");
+    if (!selectedFilesList.length) {
       return;
     }
 
-    await processAndSelectCourse(videoFiles, selectedFilesList);
-    event.target.value = "";
+    setIsAddingCourse(true);
+
+    try {
+      const videoFiles = selectedFilesList.filter(isVideoFile);
+
+      if (!videoFiles.length) {
+        window.alert("No video files were found in the selected folder.");
+        return;
+      }
+
+      await processAndSelectCourse(videoFiles, selectedFilesList);
+    } finally {
+      event.target.value = "";
+      setIsAddingCourse(false);
+    }
   };
 
   const handleBackToHome = () => {
@@ -616,6 +630,7 @@ export default function App() {
       ) : route.name === "dashboard" ? (
         <LibraryDashboard
           courses={courses}
+          isAddingCourse={isAddingCourse}
           onBack={() => navigateTo({ name: "home", path: appRoutes.home })}
           onAddCourse={handleAddCourse}
           onSaveCourses={saveCourses}
@@ -623,6 +638,7 @@ export default function App() {
       ) : (
         <HomePage
           courses={courses}
+          isAddingCourse={isAddingCourse}
           onAddCourse={handleAddCourse}
           onSaveCourses={saveCourses}
           onCourseSelect={handleCourseSelect}

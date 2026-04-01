@@ -7,6 +7,7 @@ type DashboardContentSectionsProps = {
   courses: CourseMetadata[];
   coursesCount: number;
   defaultCoursePriority: string;
+  isAddingCourse: boolean;
   onAddCourse: () => void;
   onBack: () => void;
   onDeleteCourse: (courseId: string) => void;
@@ -19,6 +20,7 @@ export default function DashboardContentSections({
   courses,
   coursesCount,
   defaultCoursePriority,
+  isAddingCourse,
   onAddCourse,
   onBack,
   onDeleteCourse,
@@ -30,6 +32,7 @@ export default function DashboardContentSections({
     <>
       <DashboardHeaderSection coursesCount={coursesCount} onBack={onBack} />
       <DashboardToolbarSection
+        isAddingCourse={isAddingCourse}
         searchQuery={searchQuery}
         onSearchQueryChange={onSearchQueryChange}
         onAddCourse={onAddCourse}
