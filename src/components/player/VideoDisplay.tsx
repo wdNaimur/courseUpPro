@@ -10,6 +10,7 @@ import {
 import { PlayCircle, ChevronLeft, ChevronRight, Play } from "lucide-react";
 import type { LessonVideo } from "../../types/course";
 import type { PlayerSettings } from "../../types/settings";
+import { getAspectRatioStyle } from "../../utils/player-settings";
 import VideoAutoPlayOverlay from "./VideoAutoPlayOverlay";
 import VideoLessonInfoCard from "./VideoLessonInfoCard";
 import VideoPlaybackControls from "./VideoPlaybackControls";
@@ -527,6 +528,11 @@ export default function VideoDisplay({
     );
   }
 
+  const aspectStyle = getAspectRatioStyle(
+    playerSettings?.aspectRatio,
+    playerSettings?.customAspectRatios,
+  );
+
   return (
     <section className="flex flex-col gap-2 p-2">
       <div
@@ -543,18 +549,19 @@ export default function VideoDisplay({
         ].join(" ")}
       >
         <div
+          style={aspectStyle.containerStyle}
           className={[
-            "flex w-full items-center justify-center bg-black",
+            "flex w-full items-center justify-center bg-black transition-all duration-300",
             isFullscreen
               ? "h-full"
-              : "aspect-video max-h-[100svh] md:max-h-[80vh]",
+              : `${aspectStyle.containerClass} max-h-[100svh] md:max-h-[80vh]`,
           ].join(" ")}
         >
           <video
             ref={videoRef}
             controls={false}
             preload="metadata"
-            className="h-full w-full max-h-full"
+            className={`h-full w-full max-h-full transition-all duration-300 ${aspectStyle.videoClass}`}
           />
         </div>
 
