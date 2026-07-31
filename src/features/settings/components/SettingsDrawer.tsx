@@ -5,12 +5,14 @@ import {
   ArrowLeft,
   SlidersHorizontal,
   Monitor,
+  Palette,
   ChevronRight,
 } from "lucide-react";
 import type { CustomAspectRatio, OffsetPreset, PlayerSettings } from "../types/settings";
 import { SETTINGS_REGISTRY } from "../config/settings-registry";
 import PresetsCategoryView from "./views/PresetsCategoryView";
 import AspectCategoryView from "./views/AspectCategoryView";
+import AppearanceCategoryView from "./views/AppearanceCategoryView";
 import EditPresetFormView from "./views/EditPresetFormView";
 import EditAspectFormView from "./views/EditAspectFormView";
 
@@ -25,7 +27,7 @@ type SettingsDrawerProps = {
   onDeleteAspectRatio: (ratioId: string, e: React.MouseEvent) => void;
 };
 
-type ViewState = "menu" | "presets" | "aspect" | "create_preset" | "create_aspect";
+type ViewState = "menu" | "presets" | "aspect" | "appearance" | "create_preset" | "create_aspect";
 
 const TIME_PRESETS = [0, 5, 10, 15, 30, 60];
 
@@ -165,6 +167,8 @@ export default function SettingsDrawer({
                   ? "Presets & Offsets"
                   : view === "aspect"
                   ? "Player & Display"
+                  : view === "appearance"
+                  ? "Theme & Appearance"
                   : view === "create_preset"
                   ? editingPresetId
                     ? "Edit Preset Setup"
@@ -180,6 +184,8 @@ export default function SettingsDrawer({
                   ? "Presets & Offsets"
                   : view === "aspect"
                   ? "Aspect Ratio"
+                  : view === "appearance"
+                  ? "Theme & Visuals"
                   : view === "create_preset"
                   ? editingPresetId
                     ? "Edit Custom Preset"
@@ -222,8 +228,10 @@ export default function SettingsDrawer({
                       <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${category.badgeColorClass} group-hover:scale-105 transition-transform`}>
                         {category.iconName === "SlidersHorizontal" ? (
                           <SlidersHorizontal className="h-5 w-5" />
-                        ) : (
+                        ) : category.iconName === "Monitor" ? (
                           <Monitor className="h-5 w-5" />
+                        ) : (
+                          <Palette className="h-5 w-5" />
                         )}
                       </div>
                       <div className="min-w-0 flex-1">
@@ -264,7 +272,10 @@ export default function SettingsDrawer({
             />
           )}
 
-          {/* VIEW 4: EDIT PRESET FORM VIEW */}
+          {/* VIEW 4: THEME & APPEARANCE VIEW */}
+          {view === "appearance" && <AppearanceCategoryView />}
+
+          {/* VIEW 5: EDIT PRESET FORM VIEW */}
           {view === "create_preset" && (
             <EditPresetFormView
               editingPresetId={editingPresetId}
@@ -280,7 +291,7 @@ export default function SettingsDrawer({
             />
           )}
 
-          {/* VIEW 5: EDIT ASPECT FORM VIEW */}
+          {/* VIEW 6: EDIT ASPECT FORM VIEW */}
           {view === "create_aspect" && (
             <EditAspectFormView
               editingAspectId={editingAspectId}

@@ -23,13 +23,13 @@ export type PlayerSettings = {
   customAspectRatios?: CustomAspectRatio[];
 };
 
-export type SettingsCategoryId = "presets" | "aspect";
+export type SettingsCategoryId = "presets" | "aspect" | "appearance";
 
 export type SettingsCategorySchema = {
   id: SettingsCategoryId;
   label: string;
   subtitle: string;
-  iconName: "SlidersHorizontal" | "Monitor";
+  iconName: "SlidersHorizontal" | "Monitor" | "Palette";
   badgeColorClass: string;
   iconColorClass: string;
   getSummary: (settings: PlayerSettings) => string;

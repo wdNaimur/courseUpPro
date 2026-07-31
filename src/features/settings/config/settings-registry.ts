@@ -28,4 +28,13 @@ export const SETTINGS_REGISTRY: SettingsCategorySchema[] = [
         : `Aspect ratio: ${settings.aspectRatio || "16:9"}`;
     },
   },
+  {
+    id: "appearance",
+    label: "Theme & Appearance",
+    subtitle: "Color themes, accent colors & visual styles",
+    iconName: "Palette",
+    badgeColorClass: "bg-purple-500/15 text-purple-400",
+    iconColorClass: "text-purple-400",
+    getSummary: () => "Theme presets & accent color swatches",
+  },
 ];

@@ -2,6 +2,7 @@ import { useState } from "react";
 import { ArrowLeft, Menu, Settings, X } from "lucide-react";
 import type { PlayerSettings } from "../../settings/types/settings";
 import SettingsDrawer from "../../settings/components/SettingsDrawer";
+import { useSettingsSystem } from "../../settings/context/SettingsContext";
 
 type PlayerHeaderProps = {
   courseTitle: string;
@@ -21,6 +22,14 @@ export default function PlayerHeader({
   onUpdateSettings,
 }: PlayerHeaderProps) {
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const {
+    selectPreset,
+    savePreset,
+    deletePreset,
+    selectAspectRatio,
+    saveAspectRatio,
+    deleteAspectRatio,
+  } = useSettingsSystem();
 
   const hasActiveSettings = settings.startOffset > 0 || settings.endOffset > 0;
 
@@ -81,100 +90,35 @@ export default function PlayerHeader({
         <SettingsDrawer
           settings={settings}
           onClose={() => setIsSettingsOpen(false)}
-          onSelectPreset={(preset) =>
+          onSelectPreset={(preset) => {
+            selectPreset(preset);
             onUpdateSettings({
               ...settings,
               activePresetId: preset.id,
               startOffset: preset.startOffset,
               endOffset: preset.endOffset,
-            })
-          }
-          onSavePreset={(draft, editingId) => {
-            const name = draft.name.trim() || "Custom Preset";
-            const start = Math.max(0, draft.startOffset);
-            const end = Math.max(0, draft.endOffset);
-            const currentCustoms = settings.customPresets || [];
-            let nextCustoms;
-            let targetId: string;
-            if (editingId) {
-              targetId = editingId;
-              nextCustoms = currentCustoms.map((p) =>
-                p.id === editingId ? { ...p, name, startOffset: start, endOffset: end } : p,
-              );
-            } else {
-              targetId = `custom-${Date.now()}`;
-              nextCustoms = [...currentCustoms, { id: targetId, name, startOffset: start, endOffset: end, isSystem: false }];
-            }
-            onUpdateSettings({
-              ...settings,
-              activePresetId: targetId,
-              startOffset: start,
-              endOffset: end,
-              customPresets: nextCustoms,
             });
+          }}
+          onSavePreset={(draft, editingId) => {
+            savePreset(draft, editingId);
           }}
           onDeletePreset={(presetId, e) => {
             e.stopPropagation();
-            const currentCustoms = settings.customPresets || [];
-            const nextCustoms = currentCustoms.filter((p) => p.id !== presetId);
-            let nextActiveId = settings.activePresetId;
-            let nextStart = settings.startOffset;
-            let nextEnd = settings.endOffset;
-            if (settings.activePresetId === presetId) {
-              nextActiveId = "off";
-              nextStart = 0;
-              nextEnd = 0;
-            }
-            onUpdateSettings({
-              ...settings,
-              activePresetId: nextActiveId,
-              startOffset: nextStart,
-              endOffset: nextEnd,
-              customPresets: nextCustoms,
-            });
+            deletePreset(presetId);
           }}
-          onSelectAspectRatio={(ratioId) =>
+          onSelectAspectRatio={(ratioId) => {
+            selectAspectRatio(ratioId);
             onUpdateSettings({
               ...settings,
               aspectRatio: ratioId,
-            })
-          }
-          onSaveAspectRatio={(draft, editingId) => {
-            const w = Math.max(1, Math.floor(draft.width || 1));
-            const h = Math.max(1, Math.floor(draft.height || 1));
-            const label = draft.label.trim() || `${w}:${h} Custom`;
-            const ratioValue = `${w}/${h}`;
-            const currentRatios = settings.customAspectRatios || [];
-            let nextRatios;
-            let targetId: string;
-            if (editingId) {
-              targetId = editingId;
-              nextRatios = currentRatios.map((r) =>
-                r.id === editingId ? { ...r, label, ratioValue, desc: `${w}:${h} custom ratio` } : r,
-              );
-            } else {
-              targetId = `custom-ratio-${Date.now()}`;
-              nextRatios = [...currentRatios, { id: targetId, label, ratioValue, desc: `${w}:${h} custom ratio`, isSystem: false }];
-            }
-            onUpdateSettings({
-              ...settings,
-              aspectRatio: targetId,
-              customAspectRatios: nextRatios,
             });
+          }}
+          onSaveAspectRatio={(draft, editingId) => {
+            saveAspectRatio(draft, editingId);
           }}
           onDeleteAspectRatio={(ratioId, e) => {
             e.stopPropagation();
-            const currentRatios = settings.customAspectRatios || [];
-            const nextRatios = currentRatios.filter((r) => r.id !== ratioId);
-            let nextRatio = settings.aspectRatio;
-            if (settings.aspectRatio === ratioId) {
-              nextRatio = "16:9";
-            }
-            onUpdateSettings({
-              ...settings,
-              aspectRatio: nextRatio,
-              customAspectRatios: nextRatios,
-            });
+            deleteAspectRatio(ratioId);
           }}
         />
       )}

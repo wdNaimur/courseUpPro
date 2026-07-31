@@ -33,6 +33,7 @@ export default function HomePageContentSections({
         searchQuery={searchQuery}
         onSearchQueryChange={onSearchQueryChange}
         onAddCourse={onAddCourse}
+        onOpenDashboard={onOpenDashboard}
       />
       <HomePageCoursesSection
         appName={appName}
