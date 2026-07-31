@@ -1,20 +1,49 @@
-import React from "react";
-import SettingsDrawer from "../../features/settings/components/SettingsDrawer";
-import type { OffsetPreset, PlayerSettings } from "../../types/settings";
+import React, { createContext, useContext, useState, useEffect } from "react";
+import type { CustomAspectRatio, OffsetPreset, PlayerSettings } from "../types/settings";
+import { readPlayerSettings, savePlayerSettings, DEFAULT_PLAYER_SETTINGS } from "../utils/player-settings";
 
-type PlayerSettingsModalProps = {
+type SettingsContextType = {
   settings: PlayerSettings;
-  onClose: () => void;
-  onUpdateSettings: (settings: PlayerSettings) => void;
+  updateSettings: (newSettings: PlayerSettings) => void;
+  selectPreset: (preset: OffsetPreset) => void;
+  savePreset: (draft: { name: string; startOffset: number; endOffset: number }, editingId?: string | null) => void;
+  deletePreset: (presetId: string) => void;
+  selectAspectRatio: (ratioId: string) => void;
+  saveAspectRatio: (draft: { label: string; width: number; height: number }, editingId?: string | null) => void;
+  deleteAspectRatio: (ratioId: string) => void;
 };
 
-export default function PlayerSettingsModal({
-  settings,
-  onClose,
-  onUpdateSettings,
-}: PlayerSettingsModalProps) {
-  const handleSelectPreset = (preset: OffsetPreset) => {
-    onUpdateSettings({
+const SettingsContext = createContext<SettingsContextType | undefined>(undefined);
+
+export function SettingsProvider({
+  initialSettings,
+  onSettingsChange,
+  children,
+}: {
+  initialSettings?: PlayerSettings;
+  onSettingsChange?: (settings: PlayerSettings) => void;
+  children: React.ReactNode;
+}) {
+  const [settings, setSettingsState] = useState<PlayerSettings>(
+    initialSettings || readPlayerSettings() || DEFAULT_PLAYER_SETTINGS,
+  );
+
+  useEffect(() => {
+    if (initialSettings) {
+      setSettingsState(initialSettings);
+    }
+  }, [initialSettings]);
+
+  const updateSettings = (nextSettings: PlayerSettings) => {
+    setSettingsState(nextSettings);
+    savePlayerSettings(nextSettings);
+    if (onSettingsChange) {
+      onSettingsChange(nextSettings);
+    }
+  };
+
+  const selectPreset = (preset: OffsetPreset) => {
+    updateSettings({
       ...settings,
       activePresetId: preset.id,
       startOffset: preset.startOffset,
@@ -22,7 +51,7 @@ export default function PlayerSettingsModal({
     });
   };
 
-  const handleSavePreset = (
+  const savePreset = (
     draft: { name: string; startOffset: number; endOffset: number },
     editingId?: string | null,
   ) => {
@@ -51,7 +80,7 @@ export default function PlayerSettingsModal({
       nextCustomPresets = [...currentCustoms, newPreset];
     }
 
-    onUpdateSettings({
+    updateSettings({
       ...settings,
       activePresetId: targetPresetId,
       startOffset: start,
@@ -60,8 +89,7 @@ export default function PlayerSettingsModal({
     });
   };
 
-  const handleDeletePreset = (presetId: string, event: React.MouseEvent) => {
-    event.stopPropagation();
+  const deletePreset = (presetId: string) => {
     const currentCustoms = settings.customPresets || [];
     const nextCustomPresets = currentCustoms.filter((p) => p.id !== presetId);
 
@@ -75,7 +103,7 @@ export default function PlayerSettingsModal({
       nextEnd = 0;
     }
 
-    onUpdateSettings({
+    updateSettings({
       ...settings,
       activePresetId: nextActiveId,
       startOffset: nextStart,
@@ -84,14 +112,14 @@ export default function PlayerSettingsModal({
     });
   };
 
-  const handleSelectAspectRatio = (ratioId: string) => {
-    onUpdateSettings({
+  const selectAspectRatio = (ratioId: string) => {
+    updateSettings({
       ...settings,
       aspectRatio: ratioId,
     });
   };
 
-  const handleSaveAspectRatio = (
+  const saveAspectRatio = (
     draft: { label: string; width: number; height: number },
     editingId?: string | null,
   ) => {
@@ -101,7 +129,7 @@ export default function PlayerSettingsModal({
     const ratioValue = `${w}/${h}`;
     const currentRatios = settings.customAspectRatios || [];
 
-    let nextCustomRatios;
+    let nextCustomRatios: CustomAspectRatio[];
     let targetRatioId: string;
 
     if (editingId) {
@@ -111,7 +139,7 @@ export default function PlayerSettingsModal({
       );
     } else {
       targetRatioId = `custom-ratio-${Date.now()}`;
-      const newRatio = {
+      const newRatio: CustomAspectRatio = {
         id: targetRatioId,
         label,
         ratioValue,
@@ -121,15 +149,14 @@ export default function PlayerSettingsModal({
       nextCustomRatios = [...currentRatios, newRatio];
     }
 
-    onUpdateSettings({
+    updateSettings({
       ...settings,
       aspectRatio: targetRatioId,
       customAspectRatios: nextCustomRatios,
     });
   };
 
-  const handleDeleteAspectRatio = (ratioId: string, event: React.MouseEvent) => {
-    event.stopPropagation();
+  const deleteAspectRatio = (ratioId: string) => {
     const currentRatios = settings.customAspectRatios || [];
     const nextCustomRatios = currentRatios.filter((r) => r.id !== ratioId);
 
@@ -138,7 +165,7 @@ export default function PlayerSettingsModal({
       nextRatio = "16:9";
     }
 
-    onUpdateSettings({
+    updateSettings({
       ...settings,
       aspectRatio: nextRatio,
       customAspectRatios: nextCustomRatios,
@@ -146,15 +173,27 @@ export default function PlayerSettingsModal({
   };
 
   return (
-    <SettingsDrawer
-      settings={settings}
-      onClose={onClose}
-      onSelectPreset={handleSelectPreset}
-      onSavePreset={handleSavePreset}
-      onDeletePreset={handleDeletePreset}
-      onSelectAspectRatio={handleSelectAspectRatio}
-      onSaveAspectRatio={handleSaveAspectRatio}
-      onDeleteAspectRatio={handleDeleteAspectRatio}
-    />
+    <SettingsContext.Provider
+      value={{
+        settings,
+        updateSettings,
+        selectPreset,
+        savePreset,
+        deletePreset,
+        selectAspectRatio,
+        saveAspectRatio,
+        deleteAspectRatio,
+      }}
+    >
+      {children}
+    </SettingsContext.Provider>
   );
+}
+
+export function useSettingsSystem() {
+  const context = useContext(SettingsContext);
+  if (!context) {
+    throw new Error("useSettingsSystem must be used within a SettingsProvider");
+  }
+  return context;
 }
