@@ -9,6 +9,7 @@ import {
 } from "react";
 import { PlayCircle, ChevronLeft, ChevronRight, Play } from "lucide-react";
 import type { LessonVideo } from "../../types/course";
+import type { PlayerSettings } from "../../types/settings";
 import VideoAutoPlayOverlay from "./VideoAutoPlayOverlay";
 import VideoLessonInfoCard from "./VideoLessonInfoCard";
 import VideoPlaybackControls from "./VideoPlaybackControls";
@@ -17,6 +18,7 @@ type VideoDisplayProps = {
   activeLesson: LessonVideo | null;
   courseTitle: string;
   videoRef: RefObject<HTMLVideoElement | null>;
+  playerSettings?: PlayerSettings;
   onCompleteAndContinue: () => void;
   onPreviousLesson: () => void;
   hasNextLesson: boolean;
@@ -32,6 +34,7 @@ export default function VideoDisplay({
   activeLesson,
   courseTitle,
   videoRef,
+  playerSettings,
   onCompleteAndContinue,
   onPreviousLesson,
   hasNextLesson,
@@ -43,6 +46,7 @@ export default function VideoDisplay({
   onPlaybackSpeedChange,
 }: VideoDisplayProps) {
   const containerRef = useRef<HTMLDivElement>(null);
+  const hasTriggeredEndOffsetRef = useRef(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [showOverlays, setShowOverlays] = useState(false);
   const [showAutoPlay, setShowAutoPlay] = useState(false);
@@ -138,7 +142,38 @@ export default function VideoDisplay({
     const handleLoadedMetadata = () => {
       setDuration(Number.isFinite(video.duration) ? video.duration : 0);
     };
-    const handleTimeUpdate = () => setCurrentTime(video.currentTime);
+
+    const handleTimeUpdate = () => {
+      const videoTime = video.currentTime;
+      setCurrentTime(videoTime);
+
+      const endOffset = playerSettings?.endOffset || 0;
+      const vidDuration = Number.isFinite(video.duration) ? video.duration : 0;
+
+      if (
+        endOffset > 0 &&
+        vidDuration > endOffset &&
+        videoTime >= vidDuration - endOffset &&
+        !video.paused &&
+        !hasTriggeredEndOffsetRef.current
+      ) {
+        hasTriggeredEndOffsetRef.current = true;
+        video.pause();
+        if (hasNextLesson) {
+          setShowAutoPlay(true);
+          setCountdown(5);
+        } else {
+          onCompleteAndContinue();
+        }
+      } else if (
+        endOffset > 0 &&
+        vidDuration > endOffset &&
+        videoTime < vidDuration - endOffset - 1
+      ) {
+        hasTriggeredEndOffsetRef.current = false;
+      }
+    };
+
     const handlePlay = () => setIsPlaying(true);
     const handlePause = () => setIsPlaying(false);
     const handleVolumeSync = () => {
@@ -166,7 +201,11 @@ export default function VideoDisplay({
       video.removeEventListener("pause", handlePause);
       video.removeEventListener("volumechange", handleVolumeSync);
     };
-  }, [videoRef, activeLesson]);
+  }, [videoRef, activeLesson, playerSettings, hasNextLesson, onCompleteAndContinue]);
+
+  useEffect(() => {
+    hasTriggeredEndOffsetRef.current = false;
+  }, [activeLesson]);
 
   useEffect(() => {
     if (showAutoPlay && countdown > 0) {

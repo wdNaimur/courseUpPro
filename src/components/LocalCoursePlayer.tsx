@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useRef, useState, useCallback } from "react";
 import type { LessonVideo } from "../types/course";
+import type { PlayerSettings } from "../types/settings";
+import { readPlayerSettings, savePlayerSettings } from "../utils/player-settings";
 import {
   buildCourseKey,
   createFolderTree,
@@ -60,6 +62,9 @@ export default function LocalCoursePlayer({
     {},
   );
   const [playbackSpeed, setPlaybackSpeed] = useState(1);
+  const [playerSettings, setPlayerSettings] = useState<PlayerSettings>(() =>
+    readPlayerSettings(),
+  );
   const [isSidebarVisible, setIsSidebarVisible] = useState(() => {
     return typeof window !== "undefined" ? !isMobileViewport() : true;
   });
@@ -69,11 +74,21 @@ export default function LocalCoursePlayer({
   const hasInitialized = useRef(false);
   const lastSavedPlaybackTimeRef = useRef(0);
   const playbackSpeedRef = useRef(1);
+  const playerSettingsRef = useRef<PlayerSettings>(playerSettings);
   const courseProgressRef = useRef<CourseProgressState>({
     lessons: {},
     lastLessonId: null,
     playbackSpeed: 1,
   });
+
+  const handleUpdatePlayerSettings = useCallback((newSettings: PlayerSettings) => {
+    setPlayerSettings(newSettings);
+    savePlayerSettings(newSettings);
+  }, []);
+
+  useEffect(() => {
+    playerSettingsRef.current = playerSettings;
+  }, [playerSettings]);
 
   const applyPlaybackSpeed = useCallback((video: HTMLVideoElement | null) => {
     if (!video) return;
@@ -262,16 +277,21 @@ export default function LocalCoursePlayer({
         activeLessonId,
       );
       const duration = Number.isFinite(video.duration) ? video.duration : 0;
-      const resumeTime =
-        savedPlaybackTime > 0 &&
-        duration > 0 &&
-        savedPlaybackTime < Math.max(duration - 2, 0)
-          ? savedPlaybackTime
-          : 0;
+      const startOffset = playerSettingsRef.current.startOffset || 0;
+      const endOffset = playerSettingsRef.current.endOffset || 0;
+      const maxEffectiveTime =
+        duration > endOffset ? Math.max(0, duration - endOffset - 2) : Math.max(0, duration - 2);
 
-      if (resumeTime > 0) {
-        video.currentTime = resumeTime;
-        lastSavedPlaybackTimeRef.current = resumeTime;
+      let initialTime = 0;
+      if (savedPlaybackTime > startOffset) {
+        initialTime = savedPlaybackTime;
+      } else if (startOffset > 0 && startOffset < maxEffectiveTime) {
+        initialTime = startOffset;
+      }
+
+      if (initialTime > 0 && initialTime < maxEffectiveTime) {
+        video.currentTime = initialTime;
+        lastSavedPlaybackTimeRef.current = initialTime;
       }
     };
 
@@ -455,10 +475,12 @@ export default function LocalCoursePlayer({
       <PlayerHeader
         courseTitle={courseTitle}
         isSidebarVisible={isSidebarVisible}
+        settings={playerSettings}
         onBack={onBack}
         onToggleSidebar={() =>
           setIsSidebarVisible((previousState) => !previousState)
         }
+        onUpdateSettings={handleUpdatePlayerSettings}
       />
 
       <PlayerSidebarLayout
@@ -488,6 +510,7 @@ export default function LocalCoursePlayer({
             activeLesson={activeLesson}
             courseTitle={courseTitle}
             videoRef={videoRef}
+            playerSettings={playerSettings}
             onCompleteAndContinue={handleCompleteAndContinue}
             onPreviousLesson={handlePreviousLesson}
             hasNextLesson={hasNextLesson}
