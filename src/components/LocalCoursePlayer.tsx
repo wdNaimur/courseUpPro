@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState, useCallback } from "react";
 import type { LessonVideo } from "../types/course";
 import type { PlayerSettings } from "../types/settings";
-import { readPlayerSettings, savePlayerSettings } from "../utils/player-settings";
+import { useSettingsSystem } from "../features/settings/context/SettingsContext";
 import {
   buildCourseKey,
   createFolderTree,
@@ -62,9 +62,7 @@ export default function LocalCoursePlayer({
     {},
   );
   const [playbackSpeed, setPlaybackSpeed] = useState(1);
-  const [playerSettings, setPlayerSettings] = useState<PlayerSettings>(() =>
-    readPlayerSettings(),
-  );
+  const { settings: playerSettings, updateSettings } = useSettingsSystem();
   const [isSidebarVisible, setIsSidebarVisible] = useState(() => {
     return typeof window !== "undefined" ? !isMobileViewport() : true;
   });
@@ -82,9 +80,8 @@ export default function LocalCoursePlayer({
   });
 
   const handleUpdatePlayerSettings = useCallback((newSettings: PlayerSettings) => {
-    setPlayerSettings(newSettings);
-    savePlayerSettings(newSettings);
-  }, []);
+    updateSettings(newSettings);
+  }, [updateSettings]);
 
   useEffect(() => {
     playerSettingsRef.current = playerSettings;
